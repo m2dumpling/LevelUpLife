@@ -9,6 +9,9 @@ RUN npm ci --ignore-scripts
 # 复制源码
 COPY . .
 
+# 确保数据目录存在（构建时需要）
+RUN mkdir -p /app/data
+
 # 编译 better-sqlite3（原生模块编译）
 RUN npm rebuild better-sqlite3
 
