@@ -1,0 +1,176 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ─── RPG 暗色主题 (默认) ─── */
+:root {
+  --background: oklch(0.14 0.02 260);
+  --foreground: oklch(0.92 0.01 260);
+  --card: oklch(0.17 0.02 260);
+  --card-foreground: oklch(0.92 0.01 260);
+  --popover: oklch(0.2 0.02 260);
+  --popover-foreground: oklch(0.92 0.01 260);
+  --primary: oklch(0.65 0.2 142);
+  --primary-foreground: oklch(0.12 0.01 260);
+  --secondary: oklch(0.42 0.12 280);
+  --secondary-foreground: oklch(0.95 0.01 280);
+  --muted: oklch(0.24 0.02 260);
+  --muted-foreground: oklch(0.6 0.02 260);
+  --accent: oklch(0.55 0.16 55);
+  --accent-foreground: oklch(0.12 0.01 55);
+  --destructive: oklch(0.55 0.2 20);
+  --border: oklch(0.28 0.02 260);
+  --input: oklch(0.24 0.02 260);
+  --ring: oklch(0.65 0.2 142);
+  --chart-1: oklch(0.55 0.22 48);
+  --chart-2: oklch(0.6 0.2 142);
+  --chart-3: oklch(0.5 0.15 280);
+  --chart-4: oklch(0.55 0.15 200);
+  --chart-5: oklch(0.55 0.18 20);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.17 0.02 260);
+  --sidebar-foreground: oklch(0.92 0.01 260);
+  --sidebar-primary: oklch(0.65 0.2 142);
+  --sidebar-primary-foreground: oklch(0.12 0.01 260);
+  --sidebar-accent: oklch(0.24 0.02 260);
+  --sidebar-accent-foreground: oklch(0.92 0.01 260);
+  --sidebar-border: oklch(0.28 0.02 260);
+  --sidebar-ring: oklch(0.65 0.2 142);
+}
+
+.dark {
+  --background: oklch(0.14 0.02 260);
+  --foreground: oklch(0.92 0.01 260);
+  --card: oklch(0.17 0.02 260);
+  --card-foreground: oklch(0.92 0.01 260);
+  --popover: oklch(0.2 0.02 260);
+  --popover-foreground: oklch(0.92 0.01 260);
+  --primary: oklch(0.65 0.2 142);
+  --primary-foreground: oklch(0.12 0.01 260);
+  --secondary: oklch(0.42 0.12 280);
+  --secondary-foreground: oklch(0.95 0.01 280);
+  --muted: oklch(0.24 0.02 260);
+  --muted-foreground: oklch(0.6 0.02 260);
+  --accent: oklch(0.55 0.16 55);
+  --accent-foreground: oklch(0.12 0.01 55);
+  --destructive: oklch(0.55 0.2 20);
+  --border: oklch(0.28 0.02 260);
+  --input: oklch(0.24 0.02 260);
+  --ring: oklch(0.65 0.2 142);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* ─── RPG 风格滚动条 ─── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 3px;
+}
+
+/* ─── 浮动数值动画 ─── */
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(0.8);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-30px) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-70px) scale(0.9);
+  }
+}
+
+.animate-float-number {
+  animation: floatUp 1.2s ease-out forwards;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ─── 删除线展开动画 ─── */
+@keyframes strikethrough {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.animate-strikethrough {
+  position: relative;
+}
+.animate-strikethrough::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0%;
+  height: 2px;
+  background: var(--primary);
+  animation: strikethrough 0.4s ease-out forwards;
+}

@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  levelup:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: levelup-life
+    ports:
+      - "127.0.0.1:3000:3000"   # 仅 localhost，安全！Nginx 反代对外
+    volumes:
+      # SQLite 数据持久化
+      - levelup-data:/app/data
+    environment:
+      - NODE_ENV=production
+      - AUTH_PASSWORD=${AUTH_PASSWORD:?请设置登录密码}
+      - JWT_SECRET=${JWT_SECRET:?请设置 JWT 密钥}
+      - DATABASE_PATH=/app/data/levelup.db
+    restart: unless-stopped
+    # 1C 1G VPS 资源限制
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: "0.8"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  levelup-data:
+    driver: local
+
+# ─── 生产部署说明 ───
+# 1. 创建 .env 文件:
+#    AUTH_PASSWORD=你的强密码
+#    JWT_SECRET=$(openssl rand -base64 32)
+#
+# 2. 启动:
+#    docker compose up -d
+#
+# 3. 配合 Nginx 反向代理（推荐）:
+#    在宿主机配置 Nginx 反代 localhost:3000
+#    使用 Let's Encrypt 配置 HTTPS
+#
+# 4. 首次启动后运行种子:
+#    docker exec levelup-life npx tsx drizzle/seed.ts
