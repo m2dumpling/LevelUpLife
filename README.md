@@ -11,11 +11,13 @@ A personal RPG-style habit tracker — turn daily tasks into an adventure.
 | **Level** | Earn XP from tasks, level up. `xpToNext = 100 × level^1.5` |
 | **Gold** | Earn gold from tasks, spend at the shop |
 | **HP** | Daily HP affected by completing/skipping/failing tasks |
-| **Streak** | Consecutive completion days; resets on miss; best streak recorded |
+| **Habit** | Daily recurring tasks. Check in each day via habit log; streak tracking with best streak record |
+| **Plan** | One-time quests with due dates. Status flow: pending → in_progress → completed/failed |
 | **Achievements** | 18 achievements, some hidden, auto-unlock on completion |
 | **Story** | 6-chapter storyline triggered by progress milestones |
 | **Shop & Craft** | Buy ores with gold → craft medals → equip for XP bonus |
-| **Heatmap** | GitHub-style contribution graph showing yearly task activity |
+| **Heatmap** | GitHub-style contribution graph with week/month/year toggle |
+| **Monthly View** | 30-day future task overview showing all scheduled habits & plans |
 
 ### Task Difficulty
 
@@ -175,26 +177,39 @@ docker compose up -d --build
 ## Project Structure
 
 ```
-├── drizzle/              # DB schema, migrations, seed script
+├── drizzle/                 # DB schema, migrations, seed script
 ├── src/
 │   ├── app/
-│   │   ├── api/          # API routes (tasks, auth, shop, craft, inventory)
-│   │   ├── login/        # Login page
-│   │   ├── layout.tsx    # Root layout
-│   │   └── page.tsx      # Main dashboard
-│   ├── components/       # React components
-│   │   ├── Navbar.tsx    # Navbar + medal display
-│   │   ├── Heatmap.tsx   # GitHub-style contribution heatmap
-│   │   ├── ShopDialog.tsx     # Shop dialog
-│   │   ├── BackpackDialog.tsx # Backpack/inventory dialog
-│   │   └── ui/           # shadcn/ui primitives
-│   ├── lib/              # Utilities
-│   │   ├── auth.ts       # JWT + bcrypt auth
-│   │   ├── db.ts         # Database connection
-│   │   ├── xp-calculator.ts   # XP/level calculation
-│   │   ├── shop-data.ts  # Ore/medal configuration
-│   │   └── seed-data.ts  # Predefined achievements & story
-│   └── middleware.ts      # Route guard (JWT verification)
+│   │   ├── api/             # API routes (tasks, auth, shop, craft, inventory, logs)
+│   │   ├── login/           # Login page
+│   │   ├── layout.tsx       # Root layout
+│   │   └── page.tsx         # Main dashboard
+│   ├── components/          # React components
+│   │   ├── Navbar.tsx       # Navbar + medal display
+│   │   ├── StatDashboard.tsx     # Stats panel (level, gold, HP, streak)
+│   │   ├── TaskList.tsx     # Habit/Plan tabs + task management
+│   │   ├── TaskCard.tsx     # Individual task card with actions
+│   │   ├── Heatmap.tsx      # Contribution heatmap (week/month/year views)
+│   │   ├── MonthlyView.tsx  # 30-day future task overview
+│   │   ├── Timeline.tsx     # Recent activity log
+│   │   ├── ShopDialog.tsx   # Ore shop dialog
+│   │   ├── BackpackDialog.tsx    # Inventory & crafting dialog
+│   │   ├── LevelUpModal.tsx      # Level-up celebration modal
+│   │   ├── AchievementPopup.tsx  # Achievement unlock popup
+│   │   ├── StoryDialog.tsx       # Story event dialog
+│   │   ├── FloatingNumber.tsx    # XP/gold float animation
+│   │   └── ui/              # shadcn/ui primitives
+│   ├── hooks/               # Custom hooks
+│   │   ├── useTasks.ts      # Task CRUD + state management
+│   │   └── useStats.ts      # User stats
+│   ├── lib/                 # Utilities
+│   │   ├── auth.ts          # JWT + bcrypt auth
+│   │   ├── db.ts            # Database connection
+│   │   ├── xp-calculator.ts      # XP/level/gold calculation + medal bonus
+│   │   ├── shop-data.ts     # Ore/medal configuration
+│   │   ├── date-utils.ts    # Date formatting helpers
+│   │   └── seed-data.ts     # Predefined achievements & story
+│   └── middleware.ts         # Route guard (JWT verification)
 ├── Dockerfile
 ├── docker-compose.yml
 └── .env.example

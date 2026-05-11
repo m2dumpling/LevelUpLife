@@ -11,11 +11,13 @@
 | **等级 (Level)** | 完成任务获得经验值，累积升级。`xpToNext = 100 × level^1.5` |
 | **金币 (Gold)** | 完成任务获得金币，用于商店购买矿石 |
 | **生命值 (HP)** | 每日有 HP，完成/跳过/失败任务影响 HP |
-| **连续打卡 (Streak)** | 连续完成天数，断签重置，记录最佳纪录 |
+| **Habit（日常任务）** | 每日重复任务，通过打卡日志记录完成，支持连续天数追踪与最佳纪录 |
+| **Plan（一次性任务）** | 一次性待办，可设置截止日期，状态流转：待开始→进行中→已完成/已失败 |
 | **成就** | 18 个成就，部分隐藏，达成自动解锁 |
 | **主线剧情** | 6 章剧情，根据进度自动触发 |
 | **商店 & 合成** | 金币买矿石 → 矿石合奖牌 → 佩戴奖牌获得 XP 加成 |
-| **热力图** | GitHub 风格贡献图，展示全年任务完成情况 |
+| **热力图** | GitHub 风格贡献图，支持周/月/年三视图切换 |
+| **月度视图** | 未来 30 天任务一览，展示所有计划中的 Habit 和 Plan |
 
 ### 任务难度
 
@@ -175,26 +177,39 @@ docker compose up -d --build
 ## 项目结构
 
 ```
-├── drizzle/              # 数据库 schema、迁移、种子脚本
+├── drizzle/                 # 数据库 schema、迁移、种子脚本
 ├── src/
 │   ├── app/
-│   │   ├── api/          # API 路由 (tasks, auth, shop, craft, inventory)
-│   │   ├── login/        # 登录页面
-│   │   ├── layout.tsx    # 根布局
-│   │   └── page.tsx      # 主页面（仪表盘）
-│   ├── components/       # React 组件
-│   │   ├── Navbar.tsx    # 导航栏 + 奖牌展示
-│   │   ├── Heatmap.tsx   # GitHub 风格热力图
-│   │   ├── ShopDialog.tsx     # 商店对话框
-│   │   ├── BackpackDialog.tsx # 背包对话框
-│   │   └── ui/           # shadcn/ui 基础组件
-│   ├── lib/              # 工具库
-│   │   ├── auth.ts       # JWT + bcrypt 认证
-│   │   ├── db.ts         # 数据库连接
-│   │   ├── xp-calculator.ts   # 经验值计算
-│   │   ├── shop-data.ts  # 矿石/奖牌配置
-│   │   └── seed-data.ts  # 预设成就/剧情
-│   └── middleware.ts      # 路由鉴权守卫
+│   │   ├── api/             # API 路由 (tasks, auth, shop, craft, inventory, logs)
+│   │   ├── login/           # 登录页面
+│   │   ├── layout.tsx       # 根布局
+│   │   └── page.tsx         # 主页面（仪表盘）
+│   ├── components/          # React 组件
+│   │   ├── Navbar.tsx       # 导航栏 + 奖牌展示
+│   │   ├── StatDashboard.tsx     # 状态面板（等级/金币/HP/连续天数）
+│   │   ├── TaskList.tsx     # Habit/Plan 切换 + 任务管理
+│   │   ├── TaskCard.tsx     # 单条任务卡片
+│   │   ├── Heatmap.tsx      # 贡献热力图（周/月/年切换）
+│   │   ├── MonthlyView.tsx  # 未来 30 天任务一览
+│   │   ├── Timeline.tsx     # 近期活动日志
+│   │   ├── ShopDialog.tsx   # 矿石商店对话框
+│   │   ├── BackpackDialog.tsx    # 背包 & 合成对话框
+│   │   ├── LevelUpModal.tsx      # 升级庆祝弹窗
+│   │   ├── AchievementPopup.tsx  # 成就解锁弹窗
+│   │   ├── StoryDialog.tsx       # 剧情事件对话框
+│   │   ├── FloatingNumber.tsx    # XP/金币飘字动画
+│   │   └── ui/              # shadcn/ui 基础组件
+│   ├── hooks/               # 自定义 Hook
+│   │   ├── useTasks.ts      # 任务 CRUD + 状态管理
+│   │   └── useStats.ts      # 用户状态
+│   ├── lib/                 # 工具库
+│   │   ├── auth.ts          # JWT + bcrypt 认证
+│   │   ├── db.ts            # 数据库连接
+│   │   ├── xp-calculator.ts      # 经验值/金币计算 + 奖牌加成
+│   │   ├── shop-data.ts     # 矿石/奖牌配置
+│   │   ├── date-utils.ts    # 日期格式化工具
+│   │   └── seed-data.ts     # 预设成就/剧情
+│   └── middleware.ts         # 路由鉴权守卫
 ├── Dockerfile
 ├── docker-compose.yml
 └── .env.example
