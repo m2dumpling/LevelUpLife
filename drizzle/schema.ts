@@ -1,5 +1,7 @@
-// Schema 占位 — 第二步将完善所有表定义
-// 此文件确保 db.ts 的 import 不报错
+// LevelUp Life v2.0 — RPG 任务系统重构
+//
+// task.mode = "habit" → 日常任务 (Daily Quest)
+// task.mode = "plan"  → 主线/支线任务 (Quest)
 
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
@@ -26,6 +28,7 @@ export const task = sqliteTable("task", {
   mode: text("mode", { enum: ["habit", "plan"] }).notNull(),
   title: text("title").notNull(),
   description: text("description"),
+  // ── 难度（决定 XP/金币奖励基数）──
   difficulty: text("difficulty", {
     enum: ["trivial", "easy", "medium", "hard", "heroic"],
   })
@@ -33,13 +36,33 @@ export const task = sqliteTable("task", {
     .default("easy"),
   xpReward: integer("xp_reward").notNull(),
   goldReward: integer("gold_reward").notNull(),
+  // ── 日常任务 (mode=habit) 专属字段 ──
+  frequency: text("frequency", {
+    enum: ["daily", "weekly", "monthly"],
+  }).default("daily"),
+  timeOfDay: text("time_of_day", {
+    enum: ["morning", "afternoon", "evening", "anytime"],
+  }).default("anytime"),
   streakCount: integer("streak_count").notNull().default(0),
   bestStreak: integer("best_streak").notNull().default(0),
+  // ── 主线/支线任务 (mode=plan) 专属字段 ──
+  startDate: text("start_date"),
   dueDate: text("due_date"),
+  status: text("status", {
+    enum: ["pending", "in_progress", "completed", "failed"],
+  }).default("pending"),
+  // ── 通用 ──
   completed: integer("completed", { mode: "boolean" }).notNull().default(false),
   completedAt: text("completed_at"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at").notNull(),
+});
+
+/** 日常任务打卡日志：每次打卡一条记录 */
+export const habitLog = sqliteTable("habit_log", {
+  id: integer("id").primaryKey(),
+  taskId: integer("task_id").notNull(),
+  completedAt: text("completed_at").notNull(),
 });
 
 export const achievement = sqliteTable("achievement", {

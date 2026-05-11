@@ -1,12 +1,20 @@
 /**
- * PATCH /api/tasks/[id] — 完成任务 / 更新任务
+ * PATCH /api/tasks/[id] — 日常打卡 / 任务完成 / 更新任务
  * DELETE /api/tasks/[id] — 删除任务
+ *
+ * v2.0:
+ *   mode=habit → 打卡写入 habitLog（支持今日重复打卡校验 + 连续天数计算）
+ *   mode=plan  → 保留直接设置 completed 的行为（支持状态流转）
  */
 
 import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
-import { eq } from "drizzle-orm";
-import { applyRewards, xpForNextLevel, getEquippedBonusMultiplier } from "@/lib/xp-calculator";
+import { eq, and } from "drizzle-orm";
+import {
+  applyRewards,
+  getEquippedBonusMultiplier,
+} from "@/lib/xp-calculator";
+import { getTodayLocal, getYesterdayLocal } from "@/lib/date-utils";
 
 export async function PATCH(
   request: Request,
@@ -20,43 +28,94 @@ export async function PATCH(
     }
 
     const body = await request.json();
+    const task = db
+      .select()
+      .from(schema.task)
+      .where(eq(schema.task.id, taskId))
+      .get();
 
-    const task = db.select().from(schema.task).where(eq(schema.task.id, taskId)).get();
     if (!task) {
       return NextResponse.json({ error: "任务不存在" }, { status: 404 });
     }
 
-    // ─── 完成操作 ───
-    if (body.completed === true && !task.completed) {
-      const now = new Date();
-      const nowISO = now.toISOString();
-      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    // ═══════════════════════════════════════════════════
+    // 日常任务打卡 (mode=habit)
+    // ═══════════════════════════════════════════════════
+    if (task.mode === "habit" && body.completed === true) {
+      const today = getTodayLocal();
 
-      // 更新任务状态
-      const streakCount = task.streakCount + 1;
-      const bestStreak = Math.max(streakCount, task.bestStreak);
+      // 校验今日是否已打卡
+      const existingLog = db
+        .select()
+        .from(schema.habitLog)
+        .where(
+          and(
+            eq(schema.habitLog.taskId, taskId),
+            eq(schema.habitLog.completedAt, today)
+          )
+        )
+        .get();
+
+      if (existingLog) {
+        return NextResponse.json(
+          { error: "今日已打卡，无需重复操作" },
+          { status: 409 }
+        );
+      }
+
+      // 插入打卡日志
+      db.insert(schema.habitLog)
+        .values({ taskId, completedAt: today })
+        .run();
+
+      // 计算连击：检查昨天是否也打卡了
+      const yesterday = getYesterdayLocal();
+      const yesterdayLog = db
+        .select()
+        .from(schema.habitLog)
+        .where(
+          and(
+            eq(schema.habitLog.taskId, taskId),
+            eq(schema.habitLog.completedAt, yesterday)
+          )
+        )
+        .get();
+
+      const newStreak = yesterdayLog ? task.streakCount + 1 : 1;
+      const newBestStreak = Math.max(newStreak, task.bestStreak);
 
       db.update(schema.task)
         .set({
-          completed: true,
-          completedAt: nowISO,
-          streakCount,
-          bestStreak,
+          streakCount: newStreak,
+          bestStreak: newBestStreak,
         })
         .where(eq(schema.task.id, taskId))
         .run();
 
-      // 获取已装备奖牌的 XP 加成
+      // 奖励计算
+      const nowISO = new Date().toISOString();
       const equippedMedals = db
         .select()
         .from(schema.inventory)
         .where(eq(schema.inventory.equipped, true))
         .all();
       const equippedKeys = equippedMedals.map((m) => m.itemKey);
+      const effectiveXp = Math.round(
+        task.xpReward * getEquippedBonusMultiplier(equippedKeys)
+      );
 
-      // 更新用户属性
-      const user = db.select().from(schema.user).where(eq(schema.user.id, 1)).get()!;
-      const result = applyRewards(user, task.xpReward, task.goldReward, equippedKeys);
+      const user = db
+        .select()
+        .from(schema.user)
+        .where(eq(schema.user.id, 1))
+        .get()!;
+
+      const result = applyRewards(
+        user,
+        task.xpReward,
+        task.goldReward,
+        equippedKeys
+      );
 
       db.update(schema.user)
         .set({
@@ -69,9 +128,136 @@ export async function PATCH(
         .where(eq(schema.user.id, 1))
         .run();
 
-      const effectiveXp = Math.round(task.xpReward * getEquippedBonusMultiplier(equippedKeys));
+      // 活动日志
+      db.insert(schema.activityLog)
+        .values({
+          taskId,
+          taskTitle: task.title,
+          mode: task.mode,
+          xpEarned: effectiveXp,
+          goldEarned: task.goldReward,
+          completedAt: nowISO,
+          date: today,
+        })
+        .run();
 
-      // 记录活动日志
+      return NextResponse.json({
+        ...task,
+        completed: true,
+        streakCount: newStreak,
+        bestStreak: newBestStreak,
+        leveledUp: result.leveledUp,
+        levelsGained: result.levelsGained,
+        newLevel: result.level,
+        newXp: result.xp,
+        newXpToNext: result.xpToNext,
+        newGold: result.gold,
+      });
+    }
+
+    // ═══════════════════════════════════════════════════
+    // 日常任务取消打卡 (mode=habit)
+    // ═══════════════════════════════════════════════════
+    if (task.mode === "habit" && body.completed === false) {
+      const today = getTodayLocal();
+
+      // 删除今日打卡记录
+      db.delete(schema.habitLog)
+        .where(
+          and(
+            eq(schema.habitLog.taskId, taskId),
+            eq(schema.habitLog.completedAt, today)
+          )
+        )
+        .run();
+
+      // 重新计算连击：找最近连续打卡天数
+      const allLogs = db
+        .select()
+        .from(schema.habitLog)
+        .where(eq(schema.habitLog.taskId, taskId))
+        .all();
+
+      const completedDates = new Set(allLogs.map((l) => l.completedAt));
+
+      // 从昨天往回数连续天数
+      let recalculatedStreak = 0;
+      const checkDate = new Date();
+      while (true) {
+        const dateStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, "0")}-${String(checkDate.getDate()).padStart(2, "0")}`;
+        if (completedDates.has(dateStr)) {
+          recalculatedStreak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+
+      db.update(schema.task)
+        .set({ streakCount: recalculatedStreak })
+        .where(eq(schema.task.id, taskId))
+        .run();
+
+      return NextResponse.json({
+        ...task,
+        completed: false,
+        streakCount: recalculatedStreak,
+      });
+    }
+
+    // ═══════════════════════════════════════════════════
+    // 主线/支线任务完成 (mode=plan)
+    // ═══════════════════════════════════════════════════
+    if (task.mode === "plan" && body.completed === true && !task.completed) {
+      const now = new Date();
+      const nowISO = now.toISOString();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+      db.update(schema.task)
+        .set({
+          completed: true,
+          completedAt: nowISO,
+          status: "completed",
+        })
+        .where(eq(schema.task.id, taskId))
+        .run();
+
+      // 奖励
+      const equippedMedals = db
+        .select()
+        .from(schema.inventory)
+        .where(eq(schema.inventory.equipped, true))
+        .all();
+      const equippedKeys = equippedMedals.map((m) => m.itemKey);
+      const effectiveXp = Math.round(
+        task.xpReward * getEquippedBonusMultiplier(equippedKeys)
+      );
+
+      const user = db
+        .select()
+        .from(schema.user)
+        .where(eq(schema.user.id, 1))
+        .get()!;
+
+      const result = applyRewards(
+        user,
+        task.xpReward,
+        task.goldReward,
+        equippedKeys
+      );
+
+      db.update(schema.user)
+        .set({
+          xp: result.xp,
+          xpToNext: result.xpToNext,
+          level: result.level,
+          gold: result.gold,
+          updatedAt: nowISO,
+        })
+        .where(eq(schema.user.id, 1))
+        .run();
+
+      // 活动日志
       db.insert(schema.activityLog)
         .values({
           taskId,
@@ -88,8 +274,7 @@ export async function PATCH(
         ...task,
         completed: true,
         completedAt: nowISO,
-        streakCount,
-        bestStreak,
+        status: "completed",
         leveledUp: result.leveledUp,
         levelsGained: result.levelsGained,
         newLevel: result.level,
@@ -99,25 +284,42 @@ export async function PATCH(
       });
     }
 
-    // ─── 取消完成 ───
-    if (body.completed === false && task.completed) {
+    // ═══════════════════════════════════════════════════
+    // 主线/支线任务取消完成 (mode=plan)
+    // ═══════════════════════════════════════════════════
+    if (task.mode === "plan" && body.completed === false && task.completed) {
       db.update(schema.task)
         .set({
           completed: false,
           completedAt: null,
+          status: "in_progress",
         })
         .where(eq(schema.task.id, taskId))
         .run();
 
-      return NextResponse.json({ ...task, completed: false, completedAt: null });
+      return NextResponse.json({
+        ...task,
+        completed: false,
+        completedAt: null,
+        status: "in_progress",
+      });
     }
 
-    // ─── 常规更新 (标题、描述等) ───
+    // ═══════════════════════════════════════════════════
+    // 常规更新（v2.0 新增字段）
+    // ═══════════════════════════════════════════════════
     const updateData: Record<string, unknown> = {};
     if (body.title !== undefined) updateData.title = body.title;
     if (body.description !== undefined) updateData.description = body.description;
     if (body.difficulty !== undefined) updateData.difficulty = body.difficulty;
     if (body.sortOrder !== undefined) updateData.sortOrder = body.sortOrder;
+    // 日常任务新增
+    if (body.frequency !== undefined) updateData.frequency = body.frequency;
+    if (body.timeOfDay !== undefined) updateData.timeOfDay = body.timeOfDay;
+    // 主线/支线任务新增
+    if (body.startDate !== undefined) updateData.startDate = body.startDate;
+    if (body.dueDate !== undefined) updateData.dueDate = body.dueDate;
+    if (body.status !== undefined) updateData.status = body.status;
 
     if (Object.keys(updateData).length > 0) {
       const updated = db
@@ -148,6 +350,10 @@ export async function DELETE(
       return NextResponse.json({ error: "无效的任务 ID" }, { status: 400 });
     }
 
+    // 删除任务时级联删除打卡日志
+    db.delete(schema.habitLog)
+      .where(eq(schema.habitLog.taskId, taskId))
+      .run();
     db.delete(schema.task).where(eq(schema.task.id, taskId)).run();
 
     return NextResponse.json({ success: true });

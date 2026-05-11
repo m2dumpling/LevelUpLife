@@ -13,6 +13,7 @@ import { AchievementPopup, triggerAchievementPopup } from "@/components/Achievem
 import { StoryDialog } from "@/components/StoryDialog";
 import { ShopDialog } from "@/components/ShopDialog";
 import { BackpackDialog } from "@/components/BackpackDialog";
+import { MonthlyView } from "@/components/MonthlyView";
 import { useTasks } from "@/hooks/useTasks";
 import { useStats } from "@/hooks/useStats";
 import type { Task } from "@/hooks/useTasks";
@@ -118,7 +119,20 @@ export default function HomePage() {
   );
 
   const handleDelete = useCallback(async (id: number) => { await deleteTask(id); }, [deleteTask]);
-  const handleAdd = useCallback(async (data: { title: string; mode: "habit" | "plan"; description?: string; difficulty?: string }) => addTask(data), [addTask]);
+  const handleAdd = useCallback(
+    async (data: {
+      title: string;
+      mode: "habit" | "plan";
+      description?: string;
+      difficulty?: string;
+      frequency?: string;
+      timeOfDay?: string;
+      dueDate?: string;
+      startDate?: string;
+      status?: string;
+    }) => addTask(data),
+    [addTask]
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -141,6 +155,7 @@ export default function HomePage() {
           transition={{ duration: 0.3 }}
           className="flex items-center gap-2"
         >
+          <MonthlyView habits={habits} plans={plans} />
           <ShopDialog
             gold={stats?.gold ?? 0}
             inventory={inventory}

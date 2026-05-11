@@ -10,13 +10,21 @@ export interface Task {
   difficulty: "trivial" | "easy" | "medium" | "hard" | "heroic";
   xpReward: number;
   goldReward: number;
+  // habit fields
+  frequency?: "daily" | "weekly" | "monthly";
+  timeOfDay?: "morning" | "afternoon" | "evening" | "anytime";
   streakCount: number;
   bestStreak: number;
+  // plan fields
+  startDate?: string | null;
   dueDate: string | null;
+  status?: "pending" | "in_progress" | "completed" | "failed";
+  // common
   completed: boolean;
   completedAt: string | null;
   sortOrder: number;
   createdAt: string;
+  // bonus (from API response)
   leveledUp?: boolean;
   levelsGained?: number;
   newLevel?: number;
@@ -63,6 +71,11 @@ export function useTasks() {
       mode: "habit" | "plan";
       description?: string;
       difficulty?: string;
+      frequency?: string;
+      timeOfDay?: string;
+      dueDate?: string;
+      startDate?: string;
+      status?: string;
     }) => {
       const res = await fetch("/api/tasks", {
         method: "POST",
