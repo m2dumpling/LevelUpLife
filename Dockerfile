@@ -22,8 +22,8 @@ RUN npm run build
 # 仅安装生产依赖
 RUN npm ci --omit=dev --ignore-scripts && npm rebuild better-sqlite3
 
-# 重新安装 drizzle-kit（用于运行时 push schema）
-RUN npm install --no-save drizzle-kit
+# 重新安装运行时工具（drizzle-kit 推送 schema + tsx 运行种子脚本）
+RUN npm install --no-save drizzle-kit tsx
 
 # ─── Stage 2: 运行阶段 ───
 FROM node:24-alpine AS runner
@@ -47,6 +47,9 @@ COPY --from=builder /app/node_modules ./node_modules
 # 复制 drizzle-kit 所需的配置文件
 COPY --from=builder /app/drizzle.config.ts ./
 COPY --from=builder /app/drizzle ./drizzle
+
+# 复制源码（种子脚本需要）
+COPY --from=builder /app/src ./src
 
 # 数据目录
 RUN mkdir -p /app/data && chown -R nextjs:nodejs /app
