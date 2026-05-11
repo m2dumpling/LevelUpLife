@@ -5,8 +5,6 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["better-sqlite3"],
   // standalone 输出模式，用于 Docker 最小化部署 (1C 1G VPS 友好)
   output: "standalone",
-  // 信任 Cloudflare Tunnel 转发的请求头
-  trustHost: true,
 };
 
 export default nextConfig;
