@@ -53,7 +53,7 @@
 - **数据库**: SQLite (better-sqlite3) + Drizzle ORM
 - **认证**: JWT (jose) + bcryptjs, httpOnly cookie
 - **动画**: Framer Motion, canvas-confetti
-- **部署**: Docker + Cloudflare Tunnel
+- **部署**: pm2 + Cloudflare Tunnel
 
 ---
 
