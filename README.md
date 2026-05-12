@@ -4,46 +4,64 @@ Complete tasks, earn XP/Gold, level up.
 
 > [中文说明](./README_zh-CN.md) | Deployed via Cloudflare Tunnel
 
-## Game Systems
+## 🎮 How to Play
 
-| System | Description |
-|--------|-------------|
-| **Level** | Earn XP from tasks. `xpToNext = 100 × level^1.5` |
-| **Gold** | Earn gold from tasks, spend at the shop |
-| **HP Penalty** | -5HP per missed daily habit. 0HP = -10% XP |
-| **Habit** | Daily/weekly/monthly recurring tasks. Multi-select weekdays. Streak tracking + best streak |
-| **Plan** | One-time quests on a target date. Auto-fail when expired |
-| **Search & Filter** | Client-side: title/description search + difficulty + status filters |
-| **Confirm Dialog** | Form → preview → confirm for task creation. Edit saves in one step |
-| **Edit** | Click ✏️ icon to edit, one-click save |
-| **Undo** | Revert completed tasks back to pending |
-| **Achievements** | 18 achievements, some hidden, auto-unlock |
-| **Story** | 6-chapter storyline triggered by milestones |
-| **Shop & Craft** | Buy ores → craft medals → equip for stacked XP bonuses |
-| **Heatmap** | GitHub-style contribution graph, week/month/year toggle |
-| **Monthly View** | 30-day future task overview |
+### 📋 Create Tasks
+You have two types of quests:
 
-### Task Difficulty
+| | Habit 🔥 | Plan 📋 |
+|------|---------|------| 
+| **What** | Daily grind: exercise, read, meditate... | One-time quest: "Submit report by Friday" |
+| **When** | Every day/week/month, on chosen weekdays | A specific date you pick |
+| **Reward** | XP + Gold every time you check in ✅ | XP + Gold when completed on the due date |
 
-| Difficulty | XP | Gold |
-|------------|-----|------|
-| Trivial | 5 | 1 |
-| Easy | 10 | 3 |
-| Medium | 20 | 5 |
-| Hard | 40 | 10 |
-| Heroic | 80 | 20 |
+Click **+ Create** → set difficulty → preview → confirm. Click the circle ○ to check in, watch XP float up 🎉.
 
-### Ores & Medals
+### 📈 Level Up
+Every task gives **XP** and **Gold** based on difficulty:
 
-| Ore | Cost | Crafts Into | Required | Rarity | XP Bonus |
-|-----|------|-------------|----------|--------|----------|
-| Copper Ore | 10G | Copper Medal | 5 | Common | +2% |
-| Iron Ore | 30G | Iron Medal | 5 | Uncommon | +5% |
-| Gold Ore | 100G | Gold Medal | 5 | Rare | +10% |
-| Mithril Ore | 300G | Mithril Medal | 3 | Epic | +15% |
-| Adamantite Ore | 1000G | Adamantite Medal | 3 | Legendary | +25% |
+> Trivial 5XP · Easy 10XP · Medium 20XP · Hard 40XP · Heroic 80XP
 
-Equipped medals stack multiplicatively and display in the navbar.
+Fill the XP bar → **DING!** 🎊 Level up. `XP to next = 100 × level^1.5` — it gets harder!
+
+### 💀 HP Penalty System
+You start with **100 HP ❤️**. Each day, any Habit you promised to do but didn't → **-5 HP**.
+
+| HP | Effect |
+|----|--------|
+| > 0 | Normal — full XP earnings |
+| 0 💀 | **-10% XP penalty** — you're weakened! |
+
+Log in daily to recover **+20 HP**. Keep your streak alive 🔥!
+
+### ⚒️ Shop & Crafting
+Earn Gold → spend it:
+
+```
+Buy ores at Shop 🏪 → Craft medals ⚒️ → Equip in Backpack 🎒 → XP bonus stacks!
+```
+
+| Ore | Cost | Crafts Into | XP Bonus |
+|-----|------|-------------|----------|
+| 🪨 Copper | 10G | 🥉 Copper Medal | +2% |
+| ⛏️ Iron | 30G | 🥈 Iron Medal | +5% |
+| 🥇 Gold | 100G | 🥇 Gold Medal | +10% |
+| 💠 Mithril | 300G | 💠 Mithril Medal | +15% |
+| 💎 Adamantite | 1000G | 💎 Adamantite Medal | +25% |
+
+All equipped medals **multiply** — with 5 at +2% each you get `1.02⁵ = 1.104`, or +10.4% XP on every task.
+
+### 🏆 Achievements & Story
+- **18 achievements** unlock automatically ⚔️ — "First Quest", "Streak 10", "Level 10"...
+- **6-chapter story** 📖 triggers at milestones — meet NPCs, earn rewards
+- **Heatmap** 🟩 tracks your activity like GitHub contributions
+- **Monthly View** 🗓️ previews the next 30 days of tasks
+
+### 🛡️ Strategy Tips
+- Start with **Easy/Medium** habits, not Heroic
+- Stack **copper medals first** (cheap, 5 ore → +2%)
+- Complete at least one Habit daily to **protect your HP**
+- Use **Plan** for deadlines, **Habit** for routines
 
 ---
 
