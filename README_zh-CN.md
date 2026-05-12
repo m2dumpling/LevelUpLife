@@ -72,13 +72,19 @@ npx tsx drizzle/seed.ts   # 首次运行
 
 ---
 
-## VPS 部署 (Docker + Cloudflare Tunnel)
+## VPS 部署 (pm2 + Cloudflare Tunnel)
 
 ### 前提
 
 - 一台 VPS（1 CPU / 1 GB RAM 足够）
 - 域名 DNS 托管在 Cloudflare
-- VPS 安装了 Docker
+- Node.js 22+ 和 pm2
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+apt install -y nodejs
+npm install -g pm2
+```
 
 ### 1. 克隆仓库
 
@@ -101,51 +107,66 @@ chmod 600 .env
 cat .env | grep AUTH_PASSWORD
 ```
 
-### 3. 构建启动
+### 3. 安装构建
 
 ```bash
-docker compose up -d --build
+npm ci --omit=dev
+npm run build
 ```
 
 ### 4. 播种数据库
 
 ```bash
-docker exec -it levelup-life npx tsx drizzle/seed.ts
+npx tsx drizzle/seed.ts
 ```
 
 看到 `🎉 种子数据播种完成！` 即成功。
 
-### 5. 验证
+### 5. 用 pm2 启动
 
 ```bash
-docker ps | grep levelup
+pm2 start ecosystem.config.cjs
+pm2 save
+pm2 startup   # 开机自启
+```
+
+### 6. 验证
+
+```bash
+pm2 status
 curl -I http://127.0.0.1:3000
 ```
 
-### 6. Cloudflare Tunnel
-
-Cloudflare 控制台 → **Zero Trust** → **Networks** → **Tunnels**：
-
-1. 创建 Tunnel，选 Docker 环境，复制 token
-2. VPS 上运行：
+### 7. Cloudflare Tunnel（独立二进制，无需 Docker）
 
 ```bash
-docker run -d \
-  --name cloudflare-tunnel \
-  --restart unless-stopped \
-  --network host \
-  cloudflare/cloudflared:latest tunnel \
-  --no-autoupdate run \
-  --token YOUR_TUNNEL_TOKEN
+curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
+chmod +x /usr/local/bin/cloudflared
+
+cloudflared tunnel login
+cloudflared tunnel create levelup-life
+
+cat > /etc/systemd/system/cloudflared.service << 'EOF'
+[Unit]
+Description=Cloudflare Tunnel
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/cloudflared tunnel run --url http://localhost:3000 levelup-life
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now cloudflared
 ```
 
-3. 回到 Cloudflare 添加 Public Hostname：
-   - Subdomain / Domain 按需填
-   - Service: `http://localhost:3000`
+Cloudflare 控制台 → **Zero Trust** → **Networks** → **Tunnels**，添加 Public Hostname 指向 `http://localhost:3000`。
 
-访问域名即可。
-
-### 7. 防火墙
+### 8. 防火墙
 
 ```bash
 apt install -y ufw
@@ -155,22 +176,29 @@ ufw allow 22/tcp
 ufw --force enable
 ```
 
-Tunnel 走出站连接，无需开放 80/443。
-
 ---
 
-## VPS 更新
+## VPS 更新（~30s）
 
-代码有更新时：
+```bash
+cd /opt/levelup-life
+./update.sh
+```
+
+或手动：
 
 ```bash
 cd /opt/levelup-life
 git pull origin main
-docker compose up -d --build
-docker exec -it levelup-life npx drizzle-kit push --force
+npm run build
+pm2 reload ecosystem.config.cjs
 ```
 
-注意：如果 commit 包含 schema 变更（新增字段），必须执行 `drizzle-kit push`，否则 500 错误。
+如果 `drizzle/schema.ts` 有改动，额外执行：
+
+```bash
+npx drizzle-kit push --force
+```
 
 ---
 
@@ -206,7 +234,6 @@ docker exec -it levelup-life npx drizzle-kit push --force
 │       ├── xp-calculator.ts  # XP/等级/奖牌加成计算
 │       ├── shop-data.ts      # 矿石 & 奖牌配置
 │       └── date-utils.ts     # 日期工具
-├── Dockerfile
-├── docker-compose.yml
-└── .env.example
+├── ecosystem.config.cjs   # pm2 配置
+├── update.sh              # 一键更新脚本
 ```
