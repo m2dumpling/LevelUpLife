@@ -13,6 +13,7 @@ import { eq, and } from "drizzle-orm";
 import {
   applyRewards,
   getEquippedBonusMultiplier,
+  fillTaskRewards,
 } from "@/lib/xp-calculator";
 import { getTodayLocal, getYesterdayLocal, compareDates } from "@/lib/date-utils";
 import { settleIfNeeded } from "@/lib/daily-settlement";
@@ -324,7 +325,12 @@ export async function PATCH(
     const updateData: Record<string, unknown> = {};
     if (body.title !== undefined) updateData.title = body.title;
     if (body.description !== undefined) updateData.description = body.description;
-    if (body.difficulty !== undefined) updateData.difficulty = body.difficulty;
+    if (body.difficulty !== undefined) {
+      updateData.difficulty = body.difficulty;
+      const rewards = fillTaskRewards({ difficulty: body.difficulty as string });
+      updateData.xpReward = rewards.xpReward;
+      updateData.goldReward = rewards.goldReward;
+    }
     if (body.sortOrder !== undefined) updateData.sortOrder = body.sortOrder;
     // 日常任务
     if (body.frequency !== undefined) updateData.frequency = body.frequency;
