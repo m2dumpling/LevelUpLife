@@ -62,31 +62,34 @@ Equipped medals stack multiplicatively and display in the navbar.
 ```bash
 npm install
 cp .env.example .env
-# Edit .env to set a password
+# Edit .env: set AUTH_PASSWORD and JWT_SECRET
 
 npm run dev
-npx tsx drizzle/seed.ts   # First run only
+
+# First time only — seed database
+npx tsx drizzle/seed.ts
 ```
 
-Open `http://localhost:3000` and log in with the password from `.env`.
+Open `http://localhost:3000`, log in with the password from `.env`.
 
 ---
 
-## VPS Deployment (pm2 + Cloudflare Tunnel)
+## VPS Deployment
 
-### Prerequisites
+Tested on Ubuntu 24.04, 1 CPU / 1 GB RAM.
 
-- A VPS (1 CPU / 1 GB RAM is enough)
-- A domain with DNS managed on Cloudflare
-- Node.js 22+ and pm2 installed on the VPS
+### 0. Install Prerequisites
 
 ```bash
-# Install Node.js 22
+# Node.js 22
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 apt install -y nodejs
 
-# Install pm2
+# pm2
 npm install -g pm2
+
+# Git
+apt install -y git
 ```
 
 ### 1. Clone & Setup
@@ -106,14 +109,14 @@ JWT_SECRET=$(openssl rand -base64 32)
 EOF
 chmod 600 .env
 
-# Save your password
+# Save your password — you'll need it to log in
 cat .env | grep AUTH_PASSWORD
 ```
 
 ### 3. Install & Build
 
 ```bash
-npm ci --omit=dev
+npm ci             # ⚠️ Do NOT use --omit=dev — Tailwind/TS are needed for build
 npm run build
 ```
 
@@ -123,12 +126,14 @@ npm run build
 npx tsx drizzle/seed.ts
 ```
 
+Should print `🎉 种子数据播种完成！`. The seed script auto-loads `.env`, no manual export needed.
+
 ### 5. Start with pm2
 
 ```bash
 pm2 start ecosystem.config.cjs
 pm2 save
-pm2 startup   # 开机自启
+pm2 startup            # Auto-start on reboot
 ```
 
 ### 6. Verify
@@ -136,20 +141,36 @@ pm2 startup   # 开机自启
 ```bash
 pm2 status
 curl -I http://127.0.0.1:3000
+# Should return 307 (redirect to login) — that's correct
 ```
 
-### 7. Cloudflare Tunnel (standalone binary, no Docker)
+### 7. Cloudflare Tunnel
 
+**One-time setup:**
 ```bash
-# Download cloudflared
-curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
+# Install cloudflared
+curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
+  -o /usr/local/bin/cloudflared
 chmod +x /usr/local/bin/cloudflared
 
-# Run as a systemd service
+# Login — this prints a URL, open it in YOUR browser (not VPS) to authorize
 cloudflared tunnel login
-cloudflared tunnel create levelup-life
-# Copy the tunnel credentials JSON to ~/.cloudflared/<tunnel-id>.json
 
+# Create a tunnel
+cloudflared tunnel create levelup-life
+```
+
+Now in Cloudflare Dashboard:
+1. **Zero Trust** → **Networks** → **Tunnels**
+2. Click the newly created tunnel → **Configure**
+3. **Public Hostname** tab → Add:
+   - **Subdomain**: `@` (or any subdomain)
+   - **Domain**: your-domain.com
+   - **Type**: HTTP
+   - **URL**: `localhost:3000`
+
+**Start tunnel as systemd service:**
+```bash
 cat > /etc/systemd/system/cloudflared.service << 'EOF'
 [Unit]
 Description=Cloudflare Tunnel
@@ -166,9 +187,8 @@ EOF
 
 systemctl daemon-reload
 systemctl enable --now cloudflared
+systemctl status cloudflared     # Verify running
 ```
-
-Then in Cloudflare Dashboard → **Zero Trust** → **Networks** → **Tunnels**, add a **Public Hostname** pointing to `http://localhost:3000`.
 
 ### 8. Firewall
 
@@ -180,63 +200,75 @@ ufw allow 22/tcp
 ufw --force enable
 ```
 
+Tunnel uses outbound connections — no need to open ports 80/443.
+
+### 9. Login & Use
+
+Visit `https://your-domain.com`, log in with the `AUTH_PASSWORD` from step 2.
+
 ---
 
 ## Updating on VPS
 
 ```bash
 cd /opt/levelup-life
-./update.sh
-```
-
-Or manually:
-
-```bash
-cd /opt/levelup-life
 git pull origin main
-npm run build                    # ~25s on 1-core VPS
+npm run build                     # ~20s
 pm2 reload ecosystem.config.cjs
-```
 
-If `drizzle/schema.ts` changed in the pulled commits, also run:
-
-```bash
+# Only if drizzle/schema.ts changed:
 npx drizzle-kit push --force
 ```
+
+Or use the one-click script: `./update.sh`
+
+---
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| Build error `Cannot find module '@tailwindcss/postcss'` | You used `npm ci --omit=dev`. Re-run: `npm ci && npm run build` |
+| Seed error `AUTH_PASSWORD 未设置` | Pull latest code (seed script now auto-loads .env) |
+| API returns 404 on browser but works via curl | Check Cloudflare Tunnel Public Hostname → URL is `localhost:3000` |
+| pm2 `next start` warning | Pull latest `ecosystem.config.cjs` (now uses `server.js`) |
+| Page loads but no data | Run `npx tsx drizzle/seed.ts` |
+| `drizzle-kit push --force` fails | The `--force` flag must be spelled correctly (not `--forc`) |
 
 ---
 
 ## Project Structure
 
 ```
-├── drizzle/                  # DB schema + seed script
+├── drizzle/                    # DB schema + seed script
 ├── src/
 │   ├── app/
-│   │   ├── api/              # API: tasks, auth, shop, craft, inventory, logs
-│   │   ├── login/            # Login page
-│   │   └── page.tsx          # Main dashboard
+│   │   ├── api/                # API: tasks, auth, shop, craft, inventory, logs
+│   │   ├── login/              # Login page
+│   │   └── page.tsx            # Main dashboard
 │   ├── components/
-│   │   ├── TaskList.tsx      # Task tabs + create/edit/search/filter
-│   │   ├── TaskCard.tsx      # Task card (complete/edit/undo/delete)
-│   │   ├── Heatmap.tsx       # Contribution heatmap
-│   │   ├── MonthlyView.tsx   # 30-day future task overview
-│   │   ├── Timeline.tsx      # Daily activity log
-│   │   ├── StatDashboard.tsx # XP, Gold, HP, Streak display
-│   │   ├── Navbar.tsx        # Navigation + equipped medals
-│   │   ├── ShopDialog.tsx    # Ore shop
-│   │   ├── BackpackDialog.tsx # Inventory + medal equip
-│   │   ├── LevelUpModal.tsx  # Level-up celebration
-│   │   └── ui/               # shadcn/ui primitives
+│   │   ├── TaskList.tsx        # Task tabs + create/edit/search/filter
+│   │   ├── TaskCard.tsx        # Task card (complete/edit/undo/delete)
+│   │   ├── Heatmap.tsx         # Contribution heatmap (week/month/year)
+│   │   ├── MonthlyView.tsx     # 30-day future task overview
+│   │   ├── Timeline.tsx        # Daily activity log
+│   │   ├── StatDashboard.tsx   # XP, Gold, HP, Streak display
+│   │   ├── Navbar.tsx          # Navigation + equipped medals
+│   │   ├── ShopDialog.tsx      # Ore shop
+│   │   ├── BackpackDialog.tsx  # Inventory + medal equip
+│   │   ├── LevelUpModal.tsx    # Level-up celebration
+│   │   └── ui/                 # shadcn/ui primitives
 │   ├── hooks/
-│   │   ├── useTasks.ts       # Task CRUD
-│   │   └── useStats.ts       # User stats
+│   │   ├── useTasks.ts         # Task CRUD
+│   │   └── useStats.ts         # User stats
 │   └── lib/
-│       ├── auth.ts           # JWT + bcrypt
-│       ├── db.ts             # Database connection
+│       ├── auth.ts             # JWT + bcrypt
+│       ├── db.ts               # Database connection
 │       ├── daily-settlement.ts # HP daily settlement engine
-│       ├── xp-calculator.ts  # XP/level/medal bonus calculation
-│       ├── shop-data.ts      # Ore & medal config
-│       └── date-utils.ts     # Date helpers
-├── ecosystem.config.cjs   # pm2 config
-├── update.sh              # One-click update script
+│       ├── xp-calculator.ts    # XP/level/medal bonus calculation
+│       ├── shop-data.ts        # Ore & medal config
+│       └── date-utils.ts       # Date helpers
+├── ecosystem.config.cjs        # pm2 config
+├── update.sh                   # One-click update script
+└── .env.example
 ```

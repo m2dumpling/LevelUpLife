@@ -9,6 +9,7 @@ module.exports = {
         NODE_ENV: "production",
         PORT: "3000",
         HOSTNAME: "0.0.0.0",
+        DATABASE_PATH: "/opt/levelup-life/data/levelup.db",
       },
       max_memory_restart: "300M",
       restart_delay: 3000,
