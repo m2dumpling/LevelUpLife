@@ -19,6 +19,10 @@ export const user = sqliteTable("user", {
   streakDays: integer("streak_days").notNull().default(0),
   bestStreak: integer("best_streak").notNull().default(0),
   storyProgress: text("story_progress").notNull().default("chapter_0"),
+  // ── HP 惩罚系统 ──
+  hpPenaltyActive: integer("hp_penalty_active", { mode: "boolean" }).notNull().default(false),
+  lastSettlementDate: text("last_settlement_date"),
+  lastLoginDate: text("last_login_date"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
@@ -43,14 +47,20 @@ export const task = sqliteTable("task", {
   timeOfDay: text("time_of_day", {
     enum: ["morning", "afternoon", "evening", "anytime"],
   }).default("anytime"),
+  frequencyDays: text("frequency_days"),
+  reminderTime: text("reminder_time"),
   streakCount: integer("streak_count").notNull().default(0),
   bestStreak: integer("best_streak").notNull().default(0),
   // ── 主线/支线任务 (mode=plan) 专属字段 ──
-  startDate: text("start_date"),
-  dueDate: text("due_date"),
+  targetDate: text("target_date"),
   status: text("status", {
     enum: ["pending", "in_progress", "completed", "failed"],
   }).default("pending"),
+  // ── 日常任务 (mode=habit) 可选日期范围 ──
+  startDate: text("start_date"),
+  endDate: text("end_date"),
+  // ── 废弃字段（保留以兼容旧数据库）──
+  dueDate: text("due_date"),
   // ── 通用 ──
   completed: integer("completed", { mode: "boolean" }).notNull().default(false),
   completedAt: text("completed_at"),

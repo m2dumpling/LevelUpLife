@@ -2,15 +2,20 @@
 
 import { useRef } from "react";
 import { motion } from "framer-motion";
-import { Check, Trash2, Flame, Calendar, Star, Clock, Target } from "lucide-react";
+import { Check, Trash2, Flame, Calendar, Star, Clock, Target, AlertTriangle, Pencil, RotateCcw } from "lucide-react";
 import { spawnFloatingNumber } from "./FloatingNumber";
 import type { Task } from "@/hooks/useTasks";
+import { getTodayLocal, compareDates } from "@/lib/date-utils";
 
 interface TaskCardProps {
   task: Task;
   onComplete: (id: number) => void;
   onDelete: (id: number) => void;
+  onEdit: (task: Task) => void;
+  onUncomplete: (id: number) => void;
 }
+
+const WEEKDAY_LABELS = ["日", "一", "二", "三", "四", "五", "六"];
 
 const difficultyLabels: Record<string, string> = {
   trivial: "琐碎",
@@ -49,8 +54,9 @@ const timeOfDayLabels: Record<string, string> = {
   anytime: "随时",
 };
 
-export function TaskCard({ task, onComplete, onDelete }: TaskCardProps) {
+export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: TaskCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const today = getTodayLocal();
 
   const handleComplete = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -67,6 +73,35 @@ export function TaskCard({ task, onComplete, onDelete }: TaskCardProps) {
   const isPlan = task.mode === "plan";
   const diffColor = difficultyColors[task.difficulty] || "";
 
+  // 是否当天可完成
+  let isToday = true;
+  let isExpired = false;
+
+  if (isHabit) {
+    // Habit: startDate 未到 → 不可完成；endDate 已过 → 不可完成
+    if (task.startDate && compareDates(task.startDate, today) > 0) {
+      isToday = false;
+    }
+    if (task.endDate && compareDates(task.endDate, today) < 0) {
+      isToday = false;
+      isExpired = true;
+    }
+  }
+
+  if (isPlan) {
+    if (task.targetDate) {
+      const cmp = compareDates(task.targetDate, today);
+      if (cmp < 0) {
+        isToday = false;
+        isExpired = true;
+      } else if (cmp > 0) {
+        isToday = false;
+      }
+    }
+  }
+
+  const canComplete = isToday && !task.completed;
+
   return (
     <motion.div
       ref={cardRef}
@@ -76,32 +111,47 @@ export function TaskCard({ task, onComplete, onDelete }: TaskCardProps) {
       exit={{ opacity: 0, x: -100, height: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       className={`
-        group relative flex items-center gap-3 p-3 rounded-lg border cursor-pointer select-none
+        group relative flex items-center gap-3 p-3 rounded-lg border select-none
         transition-colors duration-200
         ${
           task.completed
             ? "bg-[oklch(0.15_0.02_260)] border-[oklch(0.22_0.02_260)] opacity-60"
-            : `bg-card border-border hover:border-primary/40 hover:bg-[oklch(0.19_0.02_260)] ${difficultyBorder[task.difficulty]}`
+            : isExpired
+            ? "bg-[oklch(0.15_0.02_10)] border-red-500/10 opacity-50"
+            : canComplete
+            ? `bg-card border-border hover:border-primary/40 hover:bg-[oklch(0.19_0.02_260)] cursor-pointer ${difficultyBorder[task.difficulty]}`
+            : "bg-card border-border opacity-70"
         }
       `}
-      whileHover={task.completed ? {} : { scale: 1.01 }}
-      onClick={() => !task.completed && onComplete(task.id)}
+      whileHover={canComplete ? { scale: 1.01 } : {}}
+      onClick={canComplete ? handleComplete : undefined}
     >
       {/* ── 完成按钮 ── */}
-      <button
-        onClick={handleComplete}
-        className={`
-          relative flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center
-          transition-all duration-200
-          ${
-            task.completed
-              ? "bg-primary border-primary"
-              : "border-muted-foreground/40 hover:border-primary hover:bg-primary/10"
-          }
-        `}
-      >
-        {task.completed && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
-      </button>
+      {canComplete ? (
+        <button
+          onClick={handleComplete}
+          className={`
+            relative flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center
+            transition-all duration-200
+            border-muted-foreground/40 hover:border-primary hover:bg-primary/10
+          `}
+        >
+          {task.completed && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
+        </button>
+      ) : (
+        <div
+          className={`
+            relative flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center
+            ${task.completed ? "bg-primary border-primary" : "border-muted-foreground/20"}
+          `}
+        >
+          {task.completed && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
+          {isExpired && !task.completed && (
+            <AlertTriangle className="w-3 h-3 text-red-400/50" />
+          )}
+        </div>
+      )}
+
 
       {/* ── 内容 ── */}
       <div className="flex-1 min-w-0">
@@ -145,26 +195,46 @@ export function TaskCard({ task, onComplete, onDelete }: TaskCardProps) {
 
         {/* 日常任务元信息 */}
         {isHabit && (
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-[10px] text-muted-foreground flex items-center gap-1">
               <Clock className="w-3 h-3" />
               {frequencyLabels[task.frequency || "daily"]}
             </span>
+            {task.frequency === "weekly" && task.frequencyDays && (
+              <span className="text-[10px] text-muted-foreground">
+                · {task.frequencyDays.split(",").map((d) => WEEKDAY_LABELS[parseInt(d)]).join("")}
+              </span>
+            )}
             {task.timeOfDay && task.timeOfDay !== "anytime" && (
               <span className="text-[10px] text-muted-foreground">
                 · {timeOfDayLabels[task.timeOfDay]}
               </span>
             )}
+            {task.reminderTime && (
+              <span className="text-[10px] text-amber-400 flex items-center gap-0.5">
+                <Clock className="w-3 h-3" />
+                {task.reminderTime}
+              </span>
+            )}
           </div>
         )}
 
-        {/* 任务截止日期 */}
-        {isPlan && task.dueDate && (
-          <div className="flex items-center gap-1 mt-1">
-            <Target className="w-3 h-3 text-muted-foreground" />
-            <span className={`text-[10px] ${diffColor}`}>
-              截止 {task.dueDate}
+        {/* 任务日期 */}
+        {isPlan && task.targetDate && (
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <span className="flex items-center gap-1">
+              <Target className="w-3 h-3 text-muted-foreground" />
+              <span className={`text-[10px] ${isExpired ? "text-red-400" : diffColor}`}>
+                {task.targetDate}
+                {isExpired && " · 已过期"}
+              </span>
             </span>
+            {task.reminderTime && (
+              <span className="text-[10px] text-amber-400 flex items-center gap-0.5">
+                <Clock className="w-3 h-3" />
+                {task.reminderTime}
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -198,15 +268,39 @@ export function TaskCard({ task, onComplete, onDelete }: TaskCardProps) {
           </div>
         )}
 
+        {/* 编辑 */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(task);
+          }}
+          className="p-1.5 hover:bg-accent rounded"
+        >
+          <Pencil className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+        </button>
+
+        {/* 撤销 */}
+        {task.completed && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onUncomplete(task.id);
+            }}
+            className="p-1.5 hover:bg-amber-500/10 rounded"
+          >
+            <RotateCcw className="w-4 h-4 text-amber-400" />
+          </button>
+        )}
+
         {/* 删除 */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             onDelete(task.id);
           }}
-          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-destructive/10 rounded"
+          className="p-1.5 hover:bg-destructive/10 rounded"
         >
-          <Trash2 className="w-3.5 h-3.5 text-destructive/60 hover:text-destructive" />
+          <Trash2 className="w-4 h-4 text-destructive/60 hover:text-destructive" />
         </button>
       </div>
 

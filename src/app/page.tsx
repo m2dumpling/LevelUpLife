@@ -56,6 +56,8 @@ export default function HomePage() {
     completeTask,
     deleteTask,
     addTask,
+    editTask,
+    uncompleteTask,
   } = useTasks();
 
   const [levelUpData, setLevelUpData] = useState<{
@@ -97,6 +99,7 @@ export default function HomePage() {
     return () => window.removeEventListener("inventory-changed", handler);
   }, [refreshInventory]);
 
+
   const handleComplete = useCallback(
     async (taskId: number) => {
       const result = await completeTask(taskId);
@@ -119,6 +122,24 @@ export default function HomePage() {
   );
 
   const handleDelete = useCallback(async (id: number) => { await deleteTask(id); }, [deleteTask]);
+
+  const handleEdit = useCallback(
+    async (taskId: number, data: Record<string, unknown>) => {
+      const result = await editTask(taskId, data);
+      if (result) refreshStats();
+      return result;
+    },
+    [editTask, refreshStats]
+  );
+
+  const handleUncomplete = useCallback(
+    async (taskId: number) => {
+      const result = await uncompleteTask(taskId);
+      if (result) refreshStats();
+    },
+    [uncompleteTask, refreshStats]
+  );
+
   const handleAdd = useCallback(
     async (data: {
       title: string;
@@ -127,8 +148,11 @@ export default function HomePage() {
       difficulty?: string;
       frequency?: string;
       timeOfDay?: string;
-      dueDate?: string;
+      frequencyDays?: string;
+      targetDate?: string;
       startDate?: string;
+      endDate?: string;
+      reminderTime?: string;
       status?: string;
     }) => addTask(data),
     [addTask]
@@ -189,6 +213,8 @@ export default function HomePage() {
             loading={tasksLoading}
             onComplete={handleComplete}
             onDelete={handleDelete}
+            onUncomplete={handleUncomplete}
+            onEdit={handleEdit}
             onAdd={handleAdd}
           />
         </motion.section>

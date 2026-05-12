@@ -38,11 +38,11 @@ export function StatDashboard({ stats, loading }: StatDashboardProps) {
       bg: "from-amber-500/10 to-amber-500/5",
     },
     {
-      label: "生命值",
+      label: stats.hpPenaltyActive ? "生命值 ⚠️" : "生命值",
       value: `${stats.hp}/${stats.maxHp}`,
       icon: Heart,
-      color: "text-red-400",
-      bg: "from-red-500/10 to-red-500/5",
+      color: stats.hpPenaltyActive ? "text-red-500" : "text-red-400",
+      bg: stats.hpPenaltyActive ? "from-red-500/20 to-red-500/10" : "from-red-500/10 to-red-500/5",
     },
     {
       label: "连续天数",

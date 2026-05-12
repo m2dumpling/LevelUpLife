@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { Package, Hammer } from "lucide-react";
 import {
   Dialog,
@@ -117,9 +116,8 @@ export function BackpackDialog({ inventory, onCraft, onEquip }: BackpackDialogPr
                   const isCrafting = crafting === medal.medalKey;
 
                   return (
-                    <motion.div
+                    <div
                       key={ore.oreKey}
-                      whileHover={{ scale: 1.05 }}
                       className="bg-card rounded-lg p-2 border border-border flex flex-col items-center gap-1"
                     >
                       <span className="text-lg">{ore.oreEmoji}</span>
@@ -143,7 +141,7 @@ export function BackpackDialog({ inventory, onCraft, onEquip }: BackpackDialogPr
                             ? `合成(${qty}/${medal.oreRequired})`
                             : `${qty}/${medal.oreRequired}`}
                       </button>
-                    </motion.div>
+                    </div>
                   );
                 })}
               </div>
@@ -167,37 +165,36 @@ export function BackpackDialog({ inventory, onCraft, onEquip }: BackpackDialogPr
                     };
 
                     return (
-                      <motion.div
+                      <button
                         key={medal.medalKey}
-                        whileHover={{ scale: 1.01 }}
-                        className={`flex items-center justify-between p-2.5 rounded-lg border ${rarityColors[medal.rarity] ?? "border-border"}`}
+                        type="button"
+                        onClick={() => handleEquip(medal)}
+                        className={`
+                          w-full flex items-center justify-between p-2.5 rounded-lg border text-left transition-colors
+                          ${isEquipped
+                            ? "border border-l-2 border-l-emerald-400 bg-emerald-500/5"
+                            : `border ${rarityColors[medal.rarity] ?? "border-border"} hover:border-emerald-500/20`
+                          }
+                        `}
                       >
                         <div className="flex items-center gap-2">
                           <span className="text-lg">{medal.medalEmoji}</span>
                           <div>
-                            <span className="text-sm font-medium">{medal.medalName}</span>
-                            <span className="text-[10px] text-muted-foreground ml-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm font-medium">{medal.medalName}</span>
+                              {isEquipped && (
+                                <span className="text-[9px] px-1 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-medium">
+                                  佩戴中
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">
                               +{medal.xpBonusPercent}% XP
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">×{qty}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleEquip(medal)}
-                            className={`
-                              px-2.5 py-1 text-[11px] rounded-md font-medium transition-colors
-                              ${isEquipped
-                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                                : "bg-muted text-muted-foreground border border-border hover:border-emerald-500/30"
-                              }
-                            `}
-                          >
-                            {isEquipped ? "已佩戴" : "佩戴"}
-                          </button>
-                        </div>
-                      </motion.div>
+                        <span className="text-xs text-muted-foreground">×{qty}</span>
+                      </button>
                     );
                   })}
                 </div>
