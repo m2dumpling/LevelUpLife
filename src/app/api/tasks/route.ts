@@ -10,9 +10,13 @@ import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { eq, and, asc } from "drizzle-orm";
 import { fillTaskRewards } from "@/lib/xp-calculator";
-import { getTodayLocal } from "@/lib/date-utils";
+import { getTodayLocal, compareDates } from "@/lib/date-utils";
+import { settleIfNeeded } from "@/lib/daily-settlement";
 
 export async function GET() {
+  // 每日结算检查
+  settleIfNeeded();
+
   const tasks = db
     .select()
     .from(schema.task)
@@ -28,10 +32,25 @@ export async function GET() {
     .all();
   const todayCompletedIds = new Set(todayLogs.map((l) => l.taskId));
 
-  // 主线/支线任务：保持自身 completed 字段
+  // 主线/支线任务：targetDate 过期自动标记 failed
   const enriched = tasks.map((task) => {
     if (task.mode === "habit") {
       return { ...task, completed: todayCompletedIds.has(task.id) };
+    }
+    // Plan: 检查 targetDate 是否过期
+    if (
+      task.mode === "plan" &&
+      !task.completed &&
+      task.status !== "completed" &&
+      task.status !== "failed" &&
+      task.targetDate &&
+      compareDates(task.targetDate, today) < 0
+    ) {
+      db.update(schema.task)
+        .set({ status: "failed" })
+        .where(eq(schema.task.id, task.id))
+        .run();
+      return { ...task, status: "failed" as const };
     }
     return task;
   });
@@ -78,11 +97,15 @@ export async function POST(request: Request) {
         // ── 日常任务专属 ──
         frequency: (body.frequency as "daily" | "weekly" | "monthly") || "daily",
         timeOfDay: (body.timeOfDay as "morning" | "afternoon" | "evening" | "anytime") || "anytime",
+        frequencyDays: body.frequencyDays || null,
+        reminderTime: body.reminderTime || null,
         streakCount: 0,
         bestStreak: 0,
-        // ── 主线/支线任务专属 ──
+        // ── 日常任务可选日期范围 ──
         startDate: body.startDate || null,
-        dueDate: body.dueDate || null,
+        endDate: body.endDate || null,
+        // ── 主线/支线任务专属 ──
+        targetDate: body.targetDate || null,
         status: (body.status as "pending" | "in_progress" | "completed" | "failed") || "pending",
         // ── 通用 ──
         completed: false,

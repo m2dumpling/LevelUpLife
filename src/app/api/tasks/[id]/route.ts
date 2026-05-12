@@ -14,7 +14,8 @@ import {
   applyRewards,
   getEquippedBonusMultiplier,
 } from "@/lib/xp-calculator";
-import { getTodayLocal, getYesterdayLocal } from "@/lib/date-utils";
+import { getTodayLocal, getYesterdayLocal, compareDates } from "@/lib/date-utils";
+import { settleIfNeeded } from "@/lib/daily-settlement";
 
 export async function PATCH(
   request: Request,
@@ -26,6 +27,9 @@ export async function PATCH(
     if (isNaN(taskId)) {
       return NextResponse.json({ error: "无效的任务 ID" }, { status: 400 });
     }
+
+    // 每日结算检查
+    settleIfNeeded();
 
     const body = await request.json();
     const task = db
@@ -209,9 +213,18 @@ export async function PATCH(
     // 主线/支线任务完成 (mode=plan)
     // ═══════════════════════════════════════════════════
     if (task.mode === "plan" && body.completed === true && !task.completed) {
+      const today = getTodayLocal();
+
+      // 严格日期校验：只能在 targetDate 当天完成
+      if (task.targetDate && task.targetDate !== today) {
+        return NextResponse.json(
+          { error: `此任务只能在 ${task.targetDate} 完成` },
+          { status: 403 }
+        );
+      }
+
       const now = new Date();
       const nowISO = now.toISOString();
-      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
       db.update(schema.task)
         .set({
@@ -306,19 +319,22 @@ export async function PATCH(
     }
 
     // ═══════════════════════════════════════════════════
-    // 常规更新（v2.0 新增字段）
+    // 常规更新
     // ═══════════════════════════════════════════════════
     const updateData: Record<string, unknown> = {};
     if (body.title !== undefined) updateData.title = body.title;
     if (body.description !== undefined) updateData.description = body.description;
     if (body.difficulty !== undefined) updateData.difficulty = body.difficulty;
     if (body.sortOrder !== undefined) updateData.sortOrder = body.sortOrder;
-    // 日常任务新增
+    // 日常任务
     if (body.frequency !== undefined) updateData.frequency = body.frequency;
     if (body.timeOfDay !== undefined) updateData.timeOfDay = body.timeOfDay;
-    // 主线/支线任务新增
+    if (body.frequencyDays !== undefined) updateData.frequencyDays = body.frequencyDays;
+    if (body.reminderTime !== undefined) updateData.reminderTime = body.reminderTime;
     if (body.startDate !== undefined) updateData.startDate = body.startDate;
-    if (body.dueDate !== undefined) updateData.dueDate = body.dueDate;
+    if (body.endDate !== undefined) updateData.endDate = body.endDate;
+    // 主线/支线任务
+    if (body.targetDate !== undefined) updateData.targetDate = body.targetDate;
     if (body.status !== undefined) updateData.status = body.status;
 
     if (Object.keys(updateData).length > 0) {

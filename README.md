@@ -1,88 +1,86 @@
 # LevelUp Life
 
-A personal RPG-style habit tracker — turn daily tasks into an adventure.
+将日常任务变成 RPG 冒险 — 完成任务赚 XP/金币，升级变强。
 
-> [中文说明](./README.zh-CN.md)
+> [English](./README_EN.md) | 部署到了 Cloudflare Tunnel
 
-## Game Mechanics
+## 游戏系统
 
-| System | Description |
-|--------|-------------|
-| **Level** | Earn XP from tasks, level up. `xpToNext = 100 × level^1.5` |
-| **Gold** | Earn gold from tasks, spend at the shop |
-| **HP** | Daily HP affected by completing/skipping/failing tasks |
-| **Habit** | Daily recurring tasks. Check in each day via habit log; streak tracking with best streak record |
-| **Plan** | One-time quests with due dates. Status flow: pending → in_progress → completed/failed |
-| **Achievements** | 18 achievements, some hidden, auto-unlock on completion |
-| **Story** | 6-chapter storyline triggered by progress milestones |
-| **Shop & Craft** | Buy ores with gold → craft medals → equip for XP bonus |
-| **Heatmap** | GitHub-style contribution graph with week/month/year toggle |
-| **Monthly View** | 30-day future task overview showing all scheduled habits & plans |
+| 系统 | 说明 |
+|------|------|
+| **等级** | 完成任务赚 XP，升级公式 `xpToNext = 100 × level^1.5` |
+| **金币** | 完成任务赚金币，在商店消费 |
+| **HP 惩罚** | 每天未完成 Habit 扣 5HP，HP=0 时 XP 收益 -10% |
+| **Habit** | 每日/每周/每月重复任务；支持星期多选（周一二三）；连击天数 + 最佳纪录 |
+| **Plan** | 一次性任务，指定执行日期，过期自动标记失败 |
+| **搜索筛选** | 客户端实时过滤 — 标题/描述搜索 + 难度筛选 + 状态筛选 |
+| **二次确认** | 创建任务需预览确认，防止误操作 |
+| **编辑** | 点击 ✏️ 图标编辑任务，一步保存 |
+| **撤销完成** | 已完成任务可撤销恢复 |
+| **成就** | 18 个成就，部分隐藏，满足条件自动解锁 |
+| **剧情** | 6 章故事线，随进度触发 |
+| **商店 & 合成** | 金币买矿石 → 合成奖牌 → 佩戴叠加 XP 加成 |
+| **Heatmap** | GitHub 风格热力图，周/月/年切换 |
+| **月度视图** | 未来 30 天任务一览 |
 
-### Task Difficulty
+### 难度奖励
 
-| Difficulty | XP | Gold |
-|------------|-----|------|
-| Trivial | 5 | 1 |
-| Easy | 10 | 3 |
-| Medium | 20 | 5 |
-| Hard | 40 | 10 |
-| Heroic | 80 | 20 |
+| 难度 | XP | 金币 |
+|------|-----|------|
+| 琐碎 | 5 | 1 |
+| 简单 | 10 | 3 |
+| 中等 | 20 | 5 |
+| 困难 | 40 | 10 |
+| 史诗 | 80 | 20 |
 
-### Ores & Medals
+### 矿石 & 奖牌
 
-| Ore | Cost | Crafts Into | Required | Rarity | XP Bonus |
-|-----|------|-------------|----------|--------|----------|
-| Copper Ore | 10G | Copper Medal | 5 | Common | +2% |
-| Iron Ore | 30G | Iron Medal | 5 | Uncommon | +5% |
-| Gold Ore | 100G | Gold Medal | 5 | Rare | +10% |
-| Mithril Ore | 300G | Mithril Medal | 3 | Epic | +15% |
-| Adamantite Ore | 1000G | Adamantite Medal | 3 | Legendary | +25% |
+| 矿石 | 价格 | 合成奖牌 | 所需数量 | 稀有度 | XP 加成 |
+|------|------|---------|---------|--------|---------|
+| 铜矿石 | 10G | 铜奖牌 | 5 | 普通 | +2% |
+| 铁矿石 | 30G | 铁奖牌 | 5 | 罕见 | +5% |
+| 金矿石 | 100G | 金奖牌 | 5 | 稀有 | +10% |
+| 秘银矿石 | 300G | 秘银奖牌 | 3 | 史诗 | +15% |
+| 金刚石 | 1000G | 金刚石奖牌 | 3 | 传说 | +25% |
 
-Equipped medals display next to the title, sorted by rarity. XP bonuses stack multiplicatively.
-
----
-
-## Tech Stack
-
-- **Frontend**: Next.js 16 (App Router) + TypeScript + Tailwind CSS v4 + shadcn/ui
-- **Database**: SQLite (better-sqlite3) + Drizzle ORM
-- **Auth**: JWT (jose) + bcryptjs, httpOnly cookie
-- **Animation**: Framer Motion, canvas-confetti
-- **Deployment**: Docker + Cloudflare Tunnel
+佩戴奖牌显示在导航栏，按稀有度排序，XP 加成累乘。
 
 ---
 
-## Local Development
+## 技术栈
+
+- **前端**: Next.js 16 (App Router) + TypeScript + Tailwind CSS v4 + shadcn/ui
+- **数据库**: SQLite (better-sqlite3) + Drizzle ORM
+- **认证**: JWT (jose) + bcryptjs, httpOnly cookie
+- **动画**: Framer Motion, canvas-confetti
+- **部署**: Docker + Cloudflare Tunnel
+
+---
+
+## 本地开发
 
 ```bash
-# Install dependencies
 npm install
-
-# Copy environment template
 cp .env.example .env
-# Edit .env and set a development password
+# 编辑 .env 设置密码
 
-# Start dev server
 npm run dev
-
-# Seed the database (first time only)
-npx tsx drizzle/seed.ts
+npx tsx drizzle/seed.ts   # 首次运行
 ```
 
-Open `http://localhost:3000` and log in with the password from `.env`.
+打开 `http://localhost:3000`，用 `.env` 中的密码登录。
 
 ---
 
-## VPS Deployment (Docker + Cloudflare Tunnel)
+## VPS 部署 (Docker + Cloudflare Tunnel)
 
-### Prerequisites
+### 前提
 
-- A VPS (1 CPU / 1 GB RAM is enough)
-- A domain with DNS managed on Cloudflare
-- Docker installed on the VPS
+- 一台 VPS（1 CPU / 1 GB RAM 足够）
+- 域名 DNS 托管在 Cloudflare
+- VPS 安装了 Docker
 
-### Step 1: Clone the repository
+### 1. 克隆仓库
 
 ```bash
 cd /opt
@@ -90,7 +88,7 @@ git clone https://github.com/m2dumpling/LevelUpLife.git levelup-life
 cd levelup-life
 ```
 
-### Step 2: Create .env file
+### 2. 创建 .env
 
 ```bash
 cat > .env << EOF
@@ -99,39 +97,37 @@ JWT_SECRET=$(openssl rand -base64 32)
 EOF
 chmod 600 .env
 
-# Save the password for logging in
+# 记下密码
 cat .env | grep AUTH_PASSWORD
 ```
 
-### Step 3: Build and start the container
+### 3. 构建启动
 
 ```bash
 docker compose up -d --build
 ```
 
-### Step 4: Seed the database
+### 4. 播种数据库
 
 ```bash
 docker exec -it levelup-life npx tsx drizzle/seed.ts
 ```
 
-You should see `🎉 种子数据播种完成！` (Seed complete).
+看到 `🎉 种子数据播种完成！` 即成功。
 
-### Step 5: Verify the container is running
+### 5. 验证
 
 ```bash
 docker ps | grep levelup
 curl -I http://127.0.0.1:3000
 ```
 
-### Step 6: Set up Cloudflare Tunnel
+### 6. Cloudflare Tunnel
 
-In Cloudflare Dashboard:
-1. Go to **Zero Trust** → **Networks** → **Tunnels**
-2. Click **Create a tunnel**, name it (e.g. `levelup-life`)
-3. Choose **Docker** environment, copy the token from the install command
+Cloudflare 控制台 → **Zero Trust** → **Networks** → **Tunnels**：
 
-Back on the VPS:
+1. 创建 Tunnel，选 Docker 环境，复制 token
+2. VPS 上运行：
 
 ```bash
 docker run -d \
@@ -143,73 +139,73 @@ docker run -d \
   --token YOUR_TUNNEL_TOKEN
 ```
 
-Then in the Cloudflare Tunnel config, add a **Public Hostname**:
-- **Subdomain**: `@` (or your preferred subdomain)
-- **Domain**: your-domain.com
-- **Service**: `http://localhost:3000`
+3. 回到 Cloudflare 添加 Public Hostname：
+   - Subdomain / Domain 按需填
+   - Service: `http://localhost:3000`
 
-Visit `https://your-domain.com` — done.
+访问域名即可。
 
-### Step 7: Firewall
+### 7. 防火墙
 
 ```bash
 apt install -y ufw
 ufw default deny incoming
 ufw default allow outgoing
 ufw allow 22/tcp
-# No need to open 80/443 — Tunnel uses outbound connections
 ufw --force enable
-ufw status verbose
 ```
+
+Tunnel 走出站连接，无需开放 80/443。
 
 ---
 
-## Updating
+## VPS 更新
+
+代码有更新时：
 
 ```bash
 cd /opt/levelup-life
 git pull origin main
 docker compose up -d --build
+docker exec -it levelup-life npx drizzle-kit push --force
 ```
+
+注意：如果 commit 包含 schema 变更（新增字段），必须执行 `drizzle-kit push`，否则 500 错误。
 
 ---
 
-## Project Structure
+## 项目结构
 
 ```
-├── drizzle/                 # DB schema, migrations, seed script
+├── drizzle/                  # DB schema + 种子脚本
 ├── src/
 │   ├── app/
-│   │   ├── api/             # API routes (tasks, auth, shop, craft, inventory, logs)
-│   │   ├── login/           # Login page
-│   │   ├── layout.tsx       # Root layout
-│   │   └── page.tsx         # Main dashboard
-│   ├── components/          # React components
-│   │   ├── Navbar.tsx       # Navbar + medal display
-│   │   ├── StatDashboard.tsx     # Stats panel (level, gold, HP, streak)
-│   │   ├── TaskList.tsx     # Habit/Plan tabs + task management
-│   │   ├── TaskCard.tsx     # Individual task card with actions
-│   │   ├── Heatmap.tsx      # Contribution heatmap (week/month/year views)
-│   │   ├── MonthlyView.tsx  # 30-day future task overview
-│   │   ├── Timeline.tsx     # Recent activity log
-│   │   ├── ShopDialog.tsx   # Ore shop dialog
-│   │   ├── BackpackDialog.tsx    # Inventory & crafting dialog
-│   │   ├── LevelUpModal.tsx      # Level-up celebration modal
-│   │   ├── AchievementPopup.tsx  # Achievement unlock popup
-│   │   ├── StoryDialog.tsx       # Story event dialog
-│   │   ├── FloatingNumber.tsx    # XP/gold float animation
-│   │   └── ui/              # shadcn/ui primitives
-│   ├── hooks/               # Custom hooks
-│   │   ├── useTasks.ts      # Task CRUD + state management
-│   │   └── useStats.ts      # User stats
-│   ├── lib/                 # Utilities
-│   │   ├── auth.ts          # JWT + bcrypt auth
-│   │   ├── db.ts            # Database connection
-│   │   ├── xp-calculator.ts      # XP/level/gold calculation + medal bonus
-│   │   ├── shop-data.ts     # Ore/medal configuration
-│   │   ├── date-utils.ts    # Date formatting helpers
-│   │   └── seed-data.ts     # Predefined achievements & story
-│   └── middleware.ts         # Route guard (JWT verification)
+│   │   ├── api/              # API: tasks, auth, shop, craft, inventory, logs
+│   │   ├── login/            # 登录页
+│   │   └── page.tsx          # 主面板
+│   ├── components/
+│   │   ├── TaskList.tsx      # 任务列表 + 创建/编辑/搜索/筛选
+│   │   ├── TaskCard.tsx      # 任务卡片（完成/编辑/撤销/删除）
+│   │   ├── Heatmap.tsx       # 热力图（周/月/年）
+│   │   ├── MonthlyView.tsx   # 30 天任务预览
+│   │   ├── Timeline.tsx      # 今日日志
+│   │   ├── StatDashboard.tsx # 状态面板（等级/金币/HP/连击）
+│   │   ├── Navbar.tsx        # 导航栏
+│   │   ├── ShopDialog.tsx    # 商店
+│   │   ├── BackpackDialog.tsx # 背包（矿石 + 奖牌佩戴）
+│   │   ├── LevelUpModal.tsx  # 升级弹窗
+│   │   ├── AchievementPopup.tsx # 成就弹窗
+│   │   └── ui/               # shadcn/ui 组件
+│   ├── hooks/
+│   │   ├── useTasks.ts       # 任务 CRUD
+│   │   └── useStats.ts       # 用户状态
+│   └── lib/
+│       ├── auth.ts           # JWT + bcrypt
+│       ├── db.ts             # 数据库连接
+│       ├── daily-settlement.ts # HP 每日结算引擎
+│       ├── xp-calculator.ts  # XP/等级/奖牌加成计算
+│       ├── shop-data.ts      # 矿石 & 奖牌配置
+│       └── date-utils.ts     # 日期工具
 ├── Dockerfile
 ├── docker-compose.yml
 └── .env.example

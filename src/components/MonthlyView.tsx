@@ -101,10 +101,16 @@ export function MonthlyView({ habits, plans }: MonthlyViewProps) {
           // 每日任务每天都出现
           items.push({ task: habit, type: "habit" });
         } else if (habit.frequency === "weekly") {
-          // 每周任务：同星期几出现（匹配创建时的 weekday）
-          // 简化：每周的同一天（与今天同 weekday）
-          if (d.getDay() === todayDayOfWeek) {
-            items.push({ task: habit, type: "habit" });
+          if (habit.frequencyDays) {
+            const days = habit.frequencyDays.split(",").map(Number);
+            if (days.includes(d.getDay())) {
+              items.push({ task: habit, type: "habit" });
+            }
+          } else {
+            // 向后兼容：与今天同 weekday
+            if (d.getDay() === todayDayOfWeek) {
+              items.push({ task: habit, type: "habit" });
+            }
           }
         } else if (habit.frequency === "monthly") {
           // 每月任务：同月同日出现
@@ -118,7 +124,7 @@ export function MonthlyView({ habits, plans }: MonthlyViewProps) {
       for (const plan of plans) {
         if (plan.completed) continue;
         if (plan.status === "completed" || plan.status === "failed") continue;
-        if (plan.dueDate === dateStr) {
+        if (plan.targetDate === dateStr) {
           items.push({ task: plan, type: "plan" });
         }
       }

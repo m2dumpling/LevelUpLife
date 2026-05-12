@@ -13,11 +13,14 @@ export interface Task {
   // habit fields
   frequency?: "daily" | "weekly" | "monthly";
   timeOfDay?: "morning" | "afternoon" | "evening" | "anytime";
+  frequencyDays?: string | null;
+  reminderTime?: string | null;
   streakCount: number;
   bestStreak: number;
-  // plan fields
   startDate?: string | null;
-  dueDate: string | null;
+  endDate?: string | null;
+  // plan fields
+  targetDate: string | null;
   status?: "pending" | "in_progress" | "completed" | "failed";
   // common
   completed: boolean;
@@ -31,6 +34,22 @@ export interface Task {
   newXp?: number;
   newXpToNext?: number;
   newGold?: number;
+}
+
+export interface UserStats {
+  id: number;
+  name: string;
+  level: number;
+  xp: number;
+  xpToNext: number;
+  gold: number;
+  hp: number;
+  maxHp: number;
+  totalDays: number;
+  streakDays: number;
+  bestStreak: number;
+  storyProgress: string;
+  hpPenaltyActive: boolean;
 }
 
 export interface UserStats {
@@ -73,8 +92,11 @@ export function useTasks() {
       difficulty?: string;
       frequency?: string;
       timeOfDay?: string;
-      dueDate?: string;
+      frequencyDays?: string;
+      targetDate?: string;
       startDate?: string;
+      endDate?: string;
+      reminderTime?: string;
       status?: string;
     }) => {
       const res = await fetch("/api/tasks", {
@@ -120,6 +142,23 @@ export function useTasks() {
     return null;
   }, []);
 
+  const editTask = useCallback(
+    async (taskId: number, data: Record<string, unknown>) => {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updated } : t)));
+        return updated as Task;
+      }
+      return null;
+    },
+    []
+  );
+
   const deleteTask = useCallback(async (taskId: number) => {
     const res = await fetch(`/api/tasks/${taskId}`, { method: "DELETE" });
     if (res.ok) {
@@ -143,6 +182,7 @@ export function useTasks() {
     completed,
     loading,
     addTask,
+    editTask,
     completeTask,
     uncompleteTask,
     deleteTask,

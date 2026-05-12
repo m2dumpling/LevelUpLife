@@ -68,7 +68,7 @@ export function getEquippedBonusMultiplier(equippedMedalKeys: string[]): number 
 
 /** 应用任务完成奖励：计算新的用户状态 */
 export function applyRewards(
-  currentUser: { xp: number; xpToNext: number; level: number; gold: number; hp: number },
+  currentUser: { xp: number; xpToNext: number; level: number; gold: number; hp: number; hpPenaltyActive?: boolean },
   taskXp: number,
   taskGold: number,
   equippedMedalKeys: string[] = [],
@@ -85,7 +85,11 @@ export function applyRewards(
   let leveledUp = false;
   let levelsGained = 0;
 
-  const multiplier = getEquippedBonusMultiplier(equippedMedalKeys);
+  let multiplier = getEquippedBonusMultiplier(equippedMedalKeys);
+  // HP 归零惩罚：XP 收益 × 0.9
+  if (currentUser.hpPenaltyActive) {
+    multiplier *= 0.9;
+  }
   const effectiveXp = Math.round(taskXp * multiplier);
 
   xp += effectiveXp;
