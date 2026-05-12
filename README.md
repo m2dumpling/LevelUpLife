@@ -53,7 +53,7 @@ Equipped medals stack multiplicatively and display in the navbar.
 - **Database**: SQLite (better-sqlite3) + Drizzle ORM
 - **Auth**: JWT (jose) + bcryptjs, httpOnly cookie
 - **Animation**: Framer Motion, canvas-confetti
-- **Deployment**: Docker + Cloudflare Tunnel
+- **Deployment**: pm2 + Cloudflare Tunnel
 
 ---
 
