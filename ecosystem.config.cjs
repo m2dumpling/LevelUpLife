@@ -3,8 +3,7 @@ module.exports = {
   apps: [
     {
       name: "levelup-life",
-      script: "node_modules/.bin/next",
-      args: "start",
+      script: ".next/standalone/server.js",
       cwd: "/opt/levelup-life",
       env: {
         NODE_ENV: "production",
