@@ -72,15 +72,24 @@ Open `http://localhost:3000` and log in with the password from `.env`.
 
 ---
 
-## VPS Deployment (Docker + Cloudflare Tunnel)
+## VPS Deployment (pm2 + Cloudflare Tunnel)
 
 ### Prerequisites
 
 - A VPS (1 CPU / 1 GB RAM is enough)
 - A domain with DNS managed on Cloudflare
-- Docker installed on the VPS
+- Node.js 22+ and pm2 installed on the VPS
 
-### 1. Clone
+```bash
+# Install Node.js 22
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+apt install -y nodejs
+
+# Install pm2
+npm install -g pm2
+```
+
+### 1. Clone & Setup
 
 ```bash
 cd /opt
@@ -101,45 +110,67 @@ chmod 600 .env
 cat .env | grep AUTH_PASSWORD
 ```
 
-### 3. Build & Start
+### 3. Install & Build
 
 ```bash
-docker compose up -d --build
+npm ci --omit=dev
+npm run build
 ```
 
 ### 4. Seed Database
 
 ```bash
-docker exec -it levelup-life npx tsx drizzle/seed.ts
+npx tsx drizzle/seed.ts
 ```
 
-### 5. Verify
+### 5. Start with pm2
 
 ```bash
-docker ps | grep levelup
+pm2 start ecosystem.config.cjs
+pm2 save
+pm2 startup   # 开机自启
+```
+
+### 6. Verify
+
+```bash
+pm2 status
 curl -I http://127.0.0.1:3000
 ```
 
-### 6. Cloudflare Tunnel
-
-In Cloudflare Dashboard → **Zero Trust** → **Networks** → **Tunnels**:
-
-1. Create a tunnel, choose Docker, copy the token
-2. Run on VPS:
+### 7. Cloudflare Tunnel (standalone binary, no Docker)
 
 ```bash
-docker run -d \
-  --name cloudflare-tunnel \
-  --restart unless-stopped \
-  --network host \
-  cloudflare/cloudflared:latest tunnel \
-  --no-autoupdate run \
-  --token YOUR_TUNNEL_TOKEN
+# Download cloudflared
+curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
+chmod +x /usr/local/bin/cloudflared
+
+# Run as a systemd service
+cloudflared tunnel login
+cloudflared tunnel create levelup-life
+# Copy the tunnel credentials JSON to ~/.cloudflared/<tunnel-id>.json
+
+cat > /etc/systemd/system/cloudflared.service << 'EOF'
+[Unit]
+Description=Cloudflare Tunnel
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/cloudflared tunnel run --url http://localhost:3000 levelup-life
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now cloudflared
 ```
 
-3. Add a **Public Hostname** pointing to `http://localhost:3000`
+Then in Cloudflare Dashboard → **Zero Trust** → **Networks** → **Tunnels**, add a **Public Hostname** pointing to `http://localhost:3000`.
 
-### 7. Firewall
+### 8. Firewall
 
 ```bash
 apt install -y ufw
@@ -149,20 +180,29 @@ ufw allow 22/tcp
 ufw --force enable
 ```
 
-The tunnel uses outbound connections — no need to open 80/443.
-
 ---
 
 ## Updating on VPS
 
 ```bash
 cd /opt/levelup-life
-git pull origin main
-docker compose up -d --build
-docker exec -it levelup-life npx drizzle-kit push --force
+./update.sh
 ```
 
-The last command is **only needed when `drizzle/schema.ts` changed** in the pulled commits. Without it, new columns won't exist in the database and the API will return 500 errors.
+Or manually:
+
+```bash
+cd /opt/levelup-life
+git pull origin main
+npm run build                    # ~25s on 1-core VPS
+pm2 reload ecosystem.config.cjs
+```
+
+If `drizzle/schema.ts` changed in the pulled commits, also run:
+
+```bash
+npx drizzle-kit push --force
+```
 
 ---
 
@@ -197,7 +237,6 @@ The last command is **only needed when `drizzle/schema.ts` changed** in the pull
 │       ├── xp-calculator.ts  # XP/level/medal bonus calculation
 │       ├── shop-data.ts      # Ore & medal config
 │       └── date-utils.ts     # Date helpers
-├── Dockerfile
-├── docker-compose.yml
-└── .env.example
+├── ecosystem.config.cjs   # pm2 config
+├── update.sh              # One-click update script
 ```

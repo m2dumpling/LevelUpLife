@@ -1,0 +1,20 @@
+// pm2 配置 — 比 Docker 快 5x
+module.exports = {
+  apps: [
+    {
+      name: "levelup-life",
+      script: "node_modules/.bin/next",
+      args: "start",
+      cwd: "/opt/levelup-life",
+      env: {
+        NODE_ENV: "production",
+        PORT: "3000",
+        HOSTNAME: "0.0.0.0",
+      },
+      max_memory_restart: "300M",
+      restart_delay: 3000,
+      max_restarts: 10,
+      exp_backoff_restart_delay: 100,
+    },
+  ],
+};
