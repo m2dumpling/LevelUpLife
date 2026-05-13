@@ -2,117 +2,105 @@
 
 Complete tasks, earn XP/Gold, level up.
 
-> [中文说明](./README_zh-CN.md) | Deployed via Cloudflare Tunnel
+> [中文说明](./README_zh-CN.md) | [Android App 📱](https://github.com/m2dumpling/LevelUpLife-App) | Deployed via Cloudflare Tunnel
+
+---
 
 ## 🎮 How to Play
 
-### 📋 Create Tasks
-You have two types of quests:
+You're a hero. Every habit you build, every deadline you hit — that's XP. Level up. Buy gear. Fight the dark lord of procrastination.
+
+### 📋 Two Types of Quests
 
 | | Habit 🔥 | Plan 📋 |
-|------|---------|------| 
-| **What** | Daily grind: exercise, read, meditate... | One-time quest: "Submit report by Friday" |
-| **When** | Every day/week/month, on chosen weekdays | A specific date you pick |
-| **Reward** | XP + Gold every time you check in ✅ | XP + Gold when completed on the due date |
+|------|---------|------|
+| **What** | Your daily grind: exercise, read, meditate, drink water... | One-shot mission: "Ship the feature by Friday" |
+| **When** | Every day / week / month — pick your weekdays | A specific date you choose |
+| **Win** | Check in each cycle → XP + Gold stack up | Complete on the due date → big payout |
 
-Click **+ Create** → set difficulty → preview → confirm. Click the circle ○ to check in, watch XP float up 🎉.
+Tap **+ Create** → set difficulty → preview your quest → confirm. Tap the circle ○ to check in and watch XP fly up.
 
-Dates use **Beijing time (Asia/Shanghai)**, so Habits roll over correctly even if the VPS runs in another timezone. Undoing a completed Habit or Plan removes that completion and deducts the Gold reward.
-
-### 📈 Level Up
-Every task gives **XP** and **Gold** based on difficulty:
+### 📈 Level Up or Die Trying
 
 > Trivial 5XP · Easy 10XP · Medium 20XP · Hard 40XP · Heroic 80XP
 
-Fill the XP bar → **DING!** 🎊 Level up. `XP to next = 100 × level^1.5` — it gets harder!
+Formula: `xpToNext = 100 × level^1.5`. Level 1→2 is 100 XP. Level 50→51 is 35,000+. Things get real.
 
-### 💀 HP Penalty System
-You start with **100 HP ❤️**. Each day, any Habit you promised to do but didn't → **-5 HP**.
+### 💀 HP — Your Accountability Bar
 
-| HP | Effect |
+You start with **100 HP ❤️**. Every daily Habit you skip costs **5 HP**. Hit **zero** and you're *weakened* — **-10% XP** on everything until you recover.
+
+Log in each day to heal **+20 HP**. The game punishes neglect but rewards consistency.
+
+| HP | Status |
 |----|--------|
-| > 0 | Normal — full XP earnings |
-| 0 💀 | **-10% XP penalty** — you're weakened! |
+| > 0 | Healthy — full XP |
+| 0 💀 | Weakened — **-10% XP penalty** |
 
-Log in daily to recover **+20 HP**. Keep your streak alive 🔥!
+### ⚒️ Shop → Craft → Equip → Stack
 
-### ⚒️ Shop & Crafting
-Earn Gold → spend it:
+Gold isn't just for show. Spend it:
 
 ```
-Buy ores at Shop 🏪 → Craft medals ⚒️ → Equip in Backpack 🎒 → XP bonus stacks!
+Shop 🏪 → buy ores → Craft ⚒️ → forge medals → Equip 🎒 → XP multiplier grows
 ```
 
-| Ore | Cost | Crafts Into | XP Bonus |
-|-----|------|-------------|----------|
-| 🪨 Copper | 10G | 🥉 Copper Medal | +2% |
-| ⛏️ Iron | 30G | 🥈 Iron Medal | +5% |
-| 🥇 Gold | 100G | 🥇 Gold Medal | +10% |
-| 💠 Mithril | 300G | 💠 Mithril Medal | +15% |
-| 💎 Adamantite | 1000G | 💎 Adamantite Medal | +25% |
+| Ore | Price | Medal | Rarity | XP Bonus |
+|-----|-------|-------|--------|----------|
+| 🪨 Copper | 10G | 🥉 Copper Medal | Common | +2% |
+| ⛏️ Iron | 30G | 🥈 Iron Medal | Uncommon | +5% |
+| 🥇 Gold | 100G | 🥇 Gold Medal | Rare | +10% |
+| 💠 Mithril | 300G | 💠 Mithril Medal | Epic | +15% |
+| 💎 Adamantite | 1000G | 💎 Adamantite Medal | Legendary | +25% |
 
-All equipped medals **multiply** — with 5 at +2% each you get `1.02⁵ = 1.104`, or +10.4% XP on every task.
+Medals **multiply**. Five Copper Medals = 1.02⁵ ≈ **+10.4% XP** on every task. Stack wisely.
 
 ### 🏆 Achievements & Story
-- **18 achievements** unlock automatically ⚔️ — "First Quest", "Streak 10", "Level 10"...
-- **6-chapter story** 📖 triggers at milestones — meet NPCs, earn rewards
-- **Heatmap** 🟩 tracks your activity like GitHub contributions
-- **Monthly View** 🗓️ previews the next 30 days of tasks
-
-### 🛡️ Strategy Tips
-- Start with **Easy/Medium** habits, not Heroic
-- Stack **copper medals first** (cheap, 5 ore → +2%)
-- Complete at least one Habit daily to **protect your HP**
-- Use **Plan** for deadlines, **Habit** for routines
+- **18 hidden & visible achievements** ⚔️ — from "First Quest" to "Quest King"
+- **6-chapter story** 📖 with NPCs, dialog, and rewards
+- **GitHub-style heatmap** 🟩 tracks your habit density
+- **Monthly view** 🗓️ shows the next 30 days at a glance
 
 ---
 
-## Tech Stack
+## 📱 Also on Android
 
-- **Frontend**: Next.js 16 (App Router) + TypeScript + Tailwind CSS v4 + shadcn/ui
-- **Database**: SQLite (better-sqlite3) + Drizzle ORM
-- **Auth**: JWT (jose) + bcryptjs, httpOnly cookie
-- **Animation**: Framer Motion, canvas-confetti
-- **Deployment**: pm2 + Cloudflare Tunnel
+Want notifications that actually work? Get the **[LevelUp Life Android App →](https://github.com/m2dumpling/LevelUpLife-App)** — same game, native alarms, works offline.
 
 ---
 
-## Local Development
+## 🛠 Tech Stack
+
+Next.js 16 · TypeScript · Tailwind CSS v4 · shadcn/ui · SQLite · Drizzle ORM · JWT + bcrypt · Framer Motion · pm2 · Cloudflare Tunnel
+
+---
+
+## 🖥 Local Dev
 
 ```bash
 npm install
-cp .env.example .env
-# Edit .env: set AUTH_PASSWORD and JWT_SECRET
-
+cp .env.example .env          # Set AUTH_PASSWORD + JWT_SECRET
 npm run dev
-
-# First time only — seed database
-npx tsx drizzle/seed.ts
+npx tsx drizzle/seed.ts       # First run only
 ```
 
-Open `http://localhost:3000`, log in with the password from `.env`.
+Open `http://localhost:3000` → log in with your `.env` password.
 
 ---
 
-## VPS Deployment
+## ☁️ VPS Deployment
 
-Tested on Ubuntu 24.04, 1 CPU / 1 GB RAM.
+Tested on Ubuntu 24.04, 1 CPU / 1 GB RAM. Total cost: ~$4/month.
 
-### 0. Install Prerequisites
+### 0. Prerequisites
 
 ```bash
-# Node.js 22
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-apt install -y nodejs
-
-# pm2
+apt install -y nodejs git
 npm install -g pm2
-
-# Git
-apt install -y git
 ```
 
-### 1. Clone & Setup
+### 1. Clone
 
 ```bash
 cd /opt
@@ -120,7 +108,7 @@ git clone https://github.com/m2dumpling/LevelUpLife.git levelup-life
 cd levelup-life
 ```
 
-### 2. Create .env
+### 2. Secrets
 
 ```bash
 cat > .env << EOF
@@ -128,167 +116,118 @@ AUTH_PASSWORD=$(openssl rand -base64 16)
 JWT_SECRET=$(openssl rand -base64 32)
 EOF
 chmod 600 .env
-
-# Save your password — you'll need it to log in
-cat .env | grep AUTH_PASSWORD
+cat .env | grep AUTH_PASSWORD    # ← save this!
 ```
 
-### 3. Install & Build
+### 3. Build
 
 ```bash
-npm ci             # ⚠️ Do NOT use --omit=dev — Tailwind/TS are needed for build
+npm ci                          # ⚠️ NO --omit=dev — Tailwind needs it
 npm run build
+npx tsx drizzle/seed.ts         # prints: 🎉 种子数据播种完成！
 ```
 
-### 4. Seed Database
-
-```bash
-npx tsx drizzle/seed.ts
-```
-
-Should print `🎉 种子数据播种完成！`. The seed script auto-loads `.env`, no manual export needed.
-
-### 5. Start with pm2
+### 4. Launch
 
 ```bash
 pm2 start ecosystem.config.cjs
-pm2 save
-pm2 startup            # Auto-start on reboot
+pm2 save && pm2 startup         # auto-restart on reboot
+curl -I http://127.0.0.1:3000   # → 307 = working
 ```
 
-### 6. Verify
+### 5. Cloudflare Tunnel
 
 ```bash
-pm2 status
-curl -I http://127.0.0.1:3000
-# Should return 307 (redirect to login) — that's correct
-```
-
-### 7. Cloudflare Tunnel
-
-**One-time setup:**
-```bash
-# Install cloudflared
 curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
-  -o /usr/local/bin/cloudflared
-chmod +x /usr/local/bin/cloudflared
+  -o /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared
 
-# Login — this prints a URL, open it in YOUR browser (not VPS) to authorize
-cloudflared tunnel login
-
-# Create a tunnel
+cloudflared tunnel login         # open the URL in YOUR browser
 cloudflared tunnel create levelup-life
 ```
 
-Now in Cloudflare Dashboard:
-1. **Zero Trust** → **Networks** → **Tunnels**
-2. Click the newly created tunnel → **Configure**
-3. **Public Hostname** tab → Add:
-   - **Subdomain**: `@` (or any subdomain)
-   - **Domain**: your-domain.com
-   - **Type**: HTTP
-   - **URL**: `localhost:3000`
+Cloudflare Dashboard → **Zero Trust** → **Networks** → **Tunnels** → Configure → **Public Hostname**:
+- Domain: your-domain.com → Type: HTTP → URL: `localhost:3000`
 
-**Start tunnel as systemd service:**
 ```bash
 cat > /etc/systemd/system/cloudflared.service << 'EOF'
 [Unit]
 Description=Cloudflare Tunnel
 After=network.target
-
 [Service]
 ExecStart=/usr/local/bin/cloudflared tunnel run --url http://localhost:3000 levelup-life
 Restart=always
 RestartSec=5
-
 [Install]
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reload
-systemctl enable --now cloudflared
-systemctl status cloudflared     # Verify running
+systemctl daemon-reload && systemctl enable --now cloudflared
 ```
 
-### 8. Firewall
+### 6. Firewall
 
 ```bash
 apt install -y ufw
-ufw default deny incoming
-ufw default allow outgoing
-ufw allow 22/tcp
-ufw --force enable
+ufw default deny incoming && ufw default allow outgoing
+ufw allow 22/tcp && ufw --force enable
 ```
 
-Tunnel uses outbound connections — no need to open ports 80/443.
-
-### 9. Login & Use
-
-Visit `https://your-domain.com`, log in with the `AUTH_PASSWORD` from step 2.
+No need to open 80/443 — the tunnel uses outbound connections.
 
 ---
 
-## Updating on VPS
+## 🔄 Updating
 
 ```bash
 cd /opt/levelup-life
+./update.sh                     # one-click: pull → build → restart
+```
+
+Or manual:
+
+```bash
 git pull origin main
 npm run build                     # ~20s
 pm2 reload ecosystem.config.cjs
-
-# Only if drizzle/schema.ts changed:
-npx drizzle-kit push --force
+npx drizzle-kit push --force      # only if schema.ts changed
 ```
-
-Or use the one-click script: `./update.sh`
 
 ---
 
-## Troubleshooting
+## 🩹 Troubleshooting
 
 | Symptom | Fix |
 |---------|-----|
-| Build error `Cannot find module '@tailwindcss/postcss'` | You used `npm ci --omit=dev`. Re-run: `npm ci && npm run build` |
-| Seed error `AUTH_PASSWORD 未设置` | Pull latest code (seed script now auto-loads .env) |
-| API returns 404 on browser but works via curl | Check Cloudflare Tunnel Public Hostname → URL is `localhost:3000` |
-| pm2 `next start` warning | Pull latest `ecosystem.config.cjs` (now uses `server.js`) |
-| Page loads but no data | Run `npx tsx drizzle/seed.ts` |
-| `drizzle-kit push --force` fails | The `--force` flag must be spelled correctly (not `--forc`) |
+| Build: `Cannot find module @tailwindcss/postcss` | `npm ci --omit=dev` kills dev deps. Rerun `npm ci && npm run build` |
+| Seed: `AUTH_PASSWORD 未设置` | Pull latest — seed script now auto-loads `.env` |
+| Browser 404 but `curl localhost` works | Cloudflare Tunnel Public Hostname not pointing to `localhost:3000` |
+| pm2: `next start` warning | Pull latest `ecosystem.config.cjs` (uses `server.js` now) |
+| Blank page / no data | You skipped the seed step: `npx tsx drizzle/seed.ts` |
+| `drizzle-kit push --forc` fails | It's `--force`, not `--forc` |
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
-├── drizzle/                    # DB schema + seed script
+├── drizzle/                    # DB schema + seed
 ├── src/
 │   ├── app/
-│   │   ├── api/                # API: tasks, auth, shop, craft, inventory, logs
-│   │   ├── login/              # Login page
-│   │   └── page.tsx            # Main dashboard
+│   │   ├── api/                # REST: tasks, auth, shop, craft, inventory, logs
+│   │   └── login/              # Auth page
 │   ├── components/
 │   │   ├── TaskList.tsx        # Task tabs + create/edit/search/filter
-│   │   ├── TaskCard.tsx        # Task card (complete/edit/undo/delete)
-│   │   ├── Heatmap.tsx         # Contribution heatmap (week/month/year)
-│   │   ├── MonthlyView.tsx     # 30-day future task overview
+│   │   ├── TaskCard.tsx        # Task card (check in / edit / undo / delete)
+│   │   ├── StatDashboard.tsx   # Stats panel (Lv, XP, Gold, HP, Streak)
+│   │   ├── Heatmap.tsx         # Contribution graph (week/month/year)
+│   │   ├── MonthlyView.tsx     # 30-day task overview
 │   │   ├── Timeline.tsx        # Daily activity log
-│   │   ├── StatDashboard.tsx   # XP, Gold, HP, Streak display
-│   │   ├── Navbar.tsx          # Navigation + equipped medals
 │   │   ├── ShopDialog.tsx      # Ore shop
 │   │   ├── BackpackDialog.tsx  # Inventory + medal equip
-│   │   ├── LevelUpModal.tsx    # Level-up celebration
-│   │   └── ui/                 # shadcn/ui primitives
-│   ├── hooks/
-│   │   ├── useTasks.ts         # Task CRUD
-│   │   └── useStats.ts         # User stats
-│   └── lib/
-│       ├── auth.ts             # JWT + bcrypt
-│       ├── db.ts               # Database connection
-│       ├── daily-settlement.ts # HP daily settlement engine
-│       ├── xp-calculator.ts    # XP/level/medal bonus calculation
-│       ├── shop-data.ts        # Ore & medal config
-│       └── date-utils.ts       # Date helpers
+│   │   └── LevelUpModal.tsx    # Level-up celebration
+│   ├── hooks/                  # useTasks, useStats
+│   └── lib/                    # auth, db, xp-calc, shop-data, date-utils
 ├── ecosystem.config.cjs        # pm2 config
-├── update.sh                   # One-click update script
+├── update.sh                   # One-click VPS update
 └── .env.example
 ```
