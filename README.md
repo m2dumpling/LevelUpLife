@@ -17,6 +17,8 @@ You have two types of quests:
 
 Click **+ Create** → set difficulty → preview → confirm. Click the circle ○ to check in, watch XP float up 🎉.
 
+Dates use **Beijing time (Asia/Shanghai)**, so Habits roll over correctly even if the VPS runs in another timezone. Undoing a completed Habit or Plan removes that completion and deducts the Gold reward.
+
 ### 📈 Level Up
 Every task gives **XP** and **Gold** based on difficulty:
 
