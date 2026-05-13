@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { Task } from "@/hooks/useTasks";
-import { getTodayLocal } from "@/lib/date-utils";
+import { getDaysFromTodayLocal, getTodayLocal } from "@/lib/date-utils";
 
 interface TaskListProps {
   habits: Task[];
@@ -114,13 +114,8 @@ const TIMEOFDAY_OPTIONS = [
 /** 按 targetDate 对 plan 分组 */
 function groupPlansByDate(plans: Task[]) {
   const today = getTodayLocal();
-  const now = new Date();
-  const tomorrowDate = new Date(now);
-  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-  const tomorrow = `${tomorrowDate.getFullYear()}-${String(tomorrowDate.getMonth() + 1).padStart(2, "0")}-${String(tomorrowDate.getDate()).padStart(2, "0")}`;
-  const weekEnd = new Date(now);
-  weekEnd.setDate(weekEnd.getDate() + 7);
-  const weekEndStr = `${weekEnd.getFullYear()}-${String(weekEnd.getMonth() + 1).padStart(2, "0")}-${String(weekEnd.getDate()).padStart(2, "0")}`;
+  const tomorrow = getDaysFromTodayLocal(1);
+  const weekEndStr = getDaysFromTodayLocal(7);
 
   const overdue: Task[] = [];
   const dueToday: Task[] = [];
@@ -212,6 +207,11 @@ export function TaskList({
 
   const currentCompleted = useMemo(
     () => habitList.filter((t) => t.completed),
+    [habitList]
+  );
+
+  const activeHabitList = useMemo(
+    () => habitList.filter((t) => !t.completed),
     [habitList]
   );
 
@@ -733,19 +733,66 @@ export function TaskList({
               <p className="text-sm">点击「新建 Habit」创建每日修行！</p>
             </div>
           ) : (
-            <div className="space-y-1.5">
-              <AnimatePresence mode="popLayout">
-                {habitList.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onComplete={onComplete}
-                    onDelete={onDelete}
-                    onEdit={prefillEditForm}
-                    onUncomplete={onUncomplete}
-                  />
-                ))}
-              </AnimatePresence>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Flame className="w-4 h-4 text-orange-400" />
+                  <span className="font-medium uppercase tracking-wide">待完成</span>
+                  <span className="opacity-50">{activeHabitList.length}</span>
+                </div>
+                <AnimatePresence mode="popLayout">
+                  {activeHabitList.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onComplete={onComplete}
+                      onDelete={onDelete}
+                      onEdit={prefillEditForm}
+                      onUncomplete={onUncomplete}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+
+              {currentCompleted.length > 0 && (
+                <div>
+                  <button
+                    onClick={() => setShowCompleted(!showCompleted)}
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2"
+                  >
+                    <motion.span
+                      animate={{ rotate: showCompleted ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </motion.span>
+                    已完成 ({currentCompleted.length})
+                  </button>
+
+                  <AnimatePresence>
+                    {showCompleted && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="space-y-1.5 overflow-hidden"
+                      >
+                        {currentCompleted.map((task) => (
+                          <TaskCard
+                            key={task.id}
+                            task={task}
+                            onComplete={onComplete}
+                            onDelete={onDelete}
+                            onEdit={prefillEditForm}
+                            onUncomplete={onUncomplete}
+                          />
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
             </div>
           )}
         </>

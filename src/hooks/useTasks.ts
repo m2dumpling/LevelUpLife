@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { getTodayLocal } from "@/lib/date-utils";
 
 export interface Task {
   id: number;
@@ -82,6 +83,34 @@ export function useTasks() {
 
   useEffect(() => {
     fetchTasks();
+  }, [fetchTasks]);
+
+  useEffect(() => {
+    let activeDate = getTodayLocal();
+
+    const refreshIfDateChanged = () => {
+      const today = getTodayLocal();
+      if (today !== activeDate) {
+        activeDate = today;
+        fetchTasks();
+      }
+    };
+
+    const refreshOnVisible = () => {
+      if (document.visibilityState === "visible") {
+        refreshIfDateChanged();
+      }
+    };
+
+    window.addEventListener("focus", refreshIfDateChanged);
+    document.addEventListener("visibilitychange", refreshOnVisible);
+    const timer = window.setInterval(refreshIfDateChanged, 60_000);
+
+    return () => {
+      window.removeEventListener("focus", refreshIfDateChanged);
+      document.removeEventListener("visibilitychange", refreshOnVisible);
+      window.clearInterval(timer);
+    };
   }, [fetchTasks]);
 
   const addTask = useCallback(
