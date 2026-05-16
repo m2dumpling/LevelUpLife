@@ -17,6 +17,30 @@ try {
 const sqlite = new Database(dbPath);
 sqlite.pragma("journal_mode = WAL");
 sqlite.pragma("foreign_keys = ON");
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS reward_ledger (
+    id integer PRIMARY KEY,
+    task_id integer NOT NULL,
+    completion_key text NOT NULL,
+    mode text NOT NULL,
+    task_title text NOT NULL,
+    base_xp integer NOT NULL,
+    base_gold integer NOT NULL,
+    xp_earned integer NOT NULL,
+    gold_earned integer NOT NULL,
+    level_before integer NOT NULL,
+    xp_before integer NOT NULL,
+    xp_to_next_before integer NOT NULL,
+    gold_before integer NOT NULL,
+    level_after integer NOT NULL,
+    xp_after integer NOT NULL,
+    xp_to_next_after integer NOT NULL,
+    gold_after integer NOT NULL,
+    completed_date text NOT NULL,
+    created_at text NOT NULL,
+    reversed_at text
+  )
+`);
 
 export const db = drizzle(sqlite, { schema });
 export { schema };

@@ -37,6 +37,32 @@ export function xpForNextLevel(level: number): number {
   return Math.round(BASE_XP * Math.pow(level, 1.5));
 }
 
+export function totalXpFromLevelState(level: number, xp: number): number {
+  let total = Math.max(0, xp);
+  for (let currentLevel = 1; currentLevel < Math.max(1, level); currentLevel++) {
+    total += xpForNextLevel(currentLevel);
+  }
+  return total;
+}
+
+export function levelStateFromTotalXp(totalXp: number): {
+  level: number;
+  xp: number;
+  xpToNext: number;
+} {
+  let remaining = Math.max(0, Math.floor(totalXp));
+  let level = 1;
+  let xpToNext = xpForNextLevel(level);
+
+  while (remaining >= xpToNext) {
+    remaining -= xpToNext;
+    level += 1;
+    xpToNext = xpForNextLevel(level);
+  }
+
+  return { level, xp: remaining, xpToNext };
+}
+
 /** 根据难度获取奖励 */
 export function getRewards(difficulty: Difficulty) {
   return DIFFICULTY_REWARDS[difficulty];
@@ -80,6 +106,7 @@ export function applyRewards(
   hp: number;
   leveledUp: boolean;
   levelsGained: number;
+  xpEarned: number;
 } {
   let { xp, xpToNext, level, gold } = currentUser;
   let leveledUp = false;
@@ -90,7 +117,8 @@ export function applyRewards(
   if (currentUser.hpPenaltyActive) {
     multiplier *= 0.9;
   }
-  const effectiveXp = Math.round(taskXp * multiplier);
+  const rawXp = taskXp * multiplier;
+  const effectiveXp = rawXp > taskXp ? Math.ceil(rawXp) : Math.round(rawXp);
 
   xp += effectiveXp;
   gold += taskGold;
@@ -112,6 +140,7 @@ export function applyRewards(
     hp: currentUser.hp,
     leveledUp,
     levelsGained,
+    xpEarned: effectiveXp,
   };
 }
 

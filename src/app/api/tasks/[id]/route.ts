@@ -1,35 +1,10 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import {
-  applyRewards,
-  fillTaskRewards,
-  getEquippedBonusMultiplier,
-} from "@/lib/xp-calculator";
+import { fillTaskRewards } from "@/lib/xp-calculator";
 import { getDaysAgoLocal, getTodayLocal } from "@/lib/date-utils";
 import { settleIfNeeded } from "@/lib/daily-settlement";
-import { deductTaskGold } from "@/lib/reward-adjustments";
-
-function getEquippedKeys(): string[] {
-  return db
-    .select()
-    .from(schema.inventory)
-    .where(eq(schema.inventory.equipped, true))
-    .all()
-    .map((item) => item.itemKey);
-}
-
-function deductGoldForTask(goldReward: number): number | undefined {
-  const user = db.select().from(schema.user).where(eq(schema.user.id, 1)).get();
-  if (!user) return undefined;
-
-  const adjusted = deductTaskGold(user, goldReward);
-  db.update(schema.user)
-    .set({ gold: adjusted.gold, updatedAt: new Date().toISOString() })
-    .where(eq(schema.user.id, 1))
-    .run();
-  return adjusted.gold;
-}
+import { grantTaskReward, revertTaskReward } from "@/lib/rewards";
 
 function recalculateHabitStreak(taskId: number, startDaysAgo = 0): number {
   const logs = db
@@ -102,10 +77,11 @@ export async function PATCH(
         .get();
 
       if (existingLog) {
-        return NextResponse.json(
-          { error: "Habit already completed today" },
-          { status: 409 }
-        );
+        return NextResponse.json({
+          ...task,
+          completed: true,
+          completedNow: false,
+        });
       }
 
       db.insert(schema.habitLog).values({ taskId, completedAt: today }).run();
@@ -118,48 +94,32 @@ export async function PATCH(
         .run();
 
       const nowISO = new Date().toISOString();
-      const equippedKeys = getEquippedKeys();
-      const effectiveXp = Math.round(
-        task.xpReward * getEquippedBonusMultiplier(equippedKeys)
-      );
-      const user = db
-        .select()
-        .from(schema.user)
-        .where(eq(schema.user.id, 1))
-        .get()!;
-      const result = applyRewards(
-        user,
-        task.xpReward,
-        task.goldReward,
-        equippedKeys
-      );
+      const completedTask = {
+        ...task,
+        completed: true,
+        streakCount: newStreak,
+        bestStreak: newBestStreak,
+      };
+      const result = grantTaskReward(completedTask);
 
-      db.update(schema.user)
-        .set({
-          xp: result.xp,
-          xpToNext: result.xpToNext,
-          level: result.level,
-          gold: result.gold,
-          updatedAt: nowISO,
-        })
-        .where(eq(schema.user.id, 1))
-        .run();
-
-      db.insert(schema.activityLog)
-        .values({
-          taskId,
-          taskTitle: task.title,
-          mode: task.mode,
-          xpEarned: effectiveXp,
-          goldEarned: task.goldReward,
-          completedAt: nowISO,
-          date: today,
-        })
-        .run();
+      if (result.awarded) {
+        db.insert(schema.activityLog)
+          .values({
+            taskId,
+            taskTitle: task.title,
+            mode: task.mode,
+            xpEarned: result.xpEarned,
+            goldEarned: result.goldEarned,
+            completedAt: nowISO,
+            date: today,
+          })
+          .run();
+      }
 
       return NextResponse.json({
         ...task,
         completed: true,
+        completedNow: true,
         streakCount: newStreak,
         bestStreak: newBestStreak,
         leveledUp: result.leveledUp,
@@ -200,15 +160,19 @@ export async function PATCH(
         .where(eq(schema.task.id, taskId))
         .run();
 
-      const newGold = existingLog
-        ? deductGoldForTask(task.goldReward)
-        : undefined;
+      const reverted = existingLog
+        ? revertTaskReward({ ...task, completed: true })
+        : null;
 
       return NextResponse.json({
         ...task,
         completed: false,
         streakCount: recalculatedStreak,
-        newGold,
+        rewardReverted: !!reverted,
+        newGold: reverted?.gold,
+        newXp: reverted?.xp,
+        newLevel: reverted?.level,
+        newXpToNext: reverted?.xpToNext,
       });
     }
 
@@ -227,50 +191,34 @@ export async function PATCH(
         .where(eq(schema.task.id, taskId))
         .run();
 
-      const equippedKeys = getEquippedKeys();
-      const effectiveXp = Math.round(
-        task.xpReward * getEquippedBonusMultiplier(equippedKeys)
-      );
-      const user = db
-        .select()
-        .from(schema.user)
-        .where(eq(schema.user.id, 1))
-        .get()!;
-      const result = applyRewards(
-        user,
-        task.xpReward,
-        task.goldReward,
-        equippedKeys
-      );
+      const completedTask = {
+        ...task,
+        completed: true,
+        completedAt: nowISO,
+        status: "completed" as const,
+      };
+      const result = grantTaskReward(completedTask);
 
-      db.update(schema.user)
-        .set({
-          xp: result.xp,
-          xpToNext: result.xpToNext,
-          level: result.level,
-          gold: result.gold,
-          updatedAt: nowISO,
-        })
-        .where(eq(schema.user.id, 1))
-        .run();
-
-      db.insert(schema.activityLog)
-        .values({
-          taskId,
-          taskTitle: task.title,
-          mode: task.mode,
-          xpEarned: effectiveXp,
-          goldEarned: task.goldReward,
-          completedAt: nowISO,
-          date: today,
-        })
-        .run();
+      if (result.awarded) {
+        db.insert(schema.activityLog)
+          .values({
+            taskId,
+            taskTitle: task.title,
+            mode: task.mode,
+            xpEarned: result.xpEarned,
+            goldEarned: result.goldEarned,
+            completedAt: nowISO,
+            date: today,
+          })
+          .run();
+      }
 
       return NextResponse.json({
         ...task,
         completed: true,
         completedAt: nowISO,
         status: "completed",
+        completedNow: true,
         leveledUp: result.leveledUp,
         levelsGained: result.levelsGained,
         newLevel: result.level,
@@ -281,7 +229,7 @@ export async function PATCH(
     }
 
     if (task.mode === "plan" && body.completed === false && task.completed) {
-      const newGold = deductGoldForTask(task.goldReward);
+      const reverted = revertTaskReward(task);
 
       db.update(schema.task)
         .set({ completed: false, completedAt: null, status: "in_progress" })
@@ -294,7 +242,11 @@ export async function PATCH(
         completed: false,
         completedAt: null,
         status: "in_progress",
-        newGold,
+        rewardReverted: !!reverted,
+        newGold: reverted?.gold,
+        newXp: reverted?.xp,
+        newLevel: reverted?.level,
+        newXpToNext: reverted?.xpToNext,
       });
     }
 
@@ -303,9 +255,11 @@ export async function PATCH(
     if (body.description !== undefined) updateData.description = body.description;
     if (body.difficulty !== undefined) {
       updateData.difficulty = body.difficulty;
-      const rewards = fillTaskRewards({ difficulty: body.difficulty as string });
-      updateData.xpReward = rewards.xpReward;
-      updateData.goldReward = rewards.goldReward;
+      if (!task.completed && task.status !== "completed") {
+        const rewards = fillTaskRewards({ difficulty: body.difficulty as string });
+        updateData.xpReward = rewards.xpReward;
+        updateData.goldReward = rewards.goldReward;
+      }
     }
     if (body.sortOrder !== undefined) updateData.sortOrder = body.sortOrder;
     if (body.frequency !== undefined) updateData.frequency = body.frequency;
@@ -318,6 +272,7 @@ export async function PATCH(
     if (body.endDate !== undefined) updateData.endDate = body.endDate;
     if (body.targetDate !== undefined) updateData.targetDate = body.targetDate;
     if (body.status !== undefined) updateData.status = body.status;
+    else if (task.mode === "plan" && !task.completed) updateData.status = "pending";
 
     if (Object.keys(updateData).length > 0) {
       const updated = db
@@ -346,6 +301,34 @@ export async function DELETE(
     const taskId = Number.parseInt(id, 10);
     if (Number.isNaN(taskId)) {
       return NextResponse.json({ error: "Invalid task id" }, { status: 400 });
+    }
+
+    const task = db
+      .select()
+      .from(schema.task)
+      .where(eq(schema.task.id, taskId))
+      .get();
+
+    if (task) {
+      if (task.mode === "plan" && task.completed) {
+        revertTaskReward(task);
+      }
+      if (task.mode === "habit") {
+        const today = getTodayLocal();
+        const todayLog = db
+          .select()
+          .from(schema.habitLog)
+          .where(
+            and(
+              eq(schema.habitLog.taskId, taskId),
+              eq(schema.habitLog.completedAt, today)
+            )
+          )
+          .get();
+        if (todayLog) {
+          revertTaskReward({ ...task, completed: true });
+        }
+      }
     }
 
     db.delete(schema.habitLog)

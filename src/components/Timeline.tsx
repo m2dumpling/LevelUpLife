@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Flame, CalendarDays } from "lucide-react";
+import { getTodayLocal } from "@/lib/date-utils";
 
 interface LogEntry {
   id: number;
@@ -17,12 +18,13 @@ interface LogEntry {
 export function Timeline() {
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   const fetchLogs = useCallback(async () => {
     const res = await fetch("/api/logs?limit=20");
     if (res.ok) {
       const logs: LogEntry[] = await res.json();
-      const today = new Date().toISOString().split("T")[0];
+      const today = getTodayLocal();
       const todayLogs = logs.filter((l) => l.date === today);
       setEntries(todayLogs);
     }
@@ -79,7 +81,7 @@ export function Timeline() {
 
       <div className="relative pl-6 border-l border-border space-y-3">
         <AnimatePresence mode="popLayout">
-          {entries.map((entry, i) => (
+          {(expanded ? entries : entries.slice(0, 5)).map((entry, i) => (
             <motion.div
               key={entry.id}
               initial={{ opacity: 0, x: -20 }}
@@ -113,6 +115,15 @@ export function Timeline() {
           ))}
         </AnimatePresence>
       </div>
+      {entries.length > 5 && (
+        <button
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          className="w-full rounded-md border border-border px-3 py-2 text-xs text-muted-foreground hover:bg-card hover:text-foreground"
+        >
+          {expanded ? "收起日志" : `展开 ${entries.length - 5} 条更多日志`}
+        </button>
+      )}
     </div>
   );
 }

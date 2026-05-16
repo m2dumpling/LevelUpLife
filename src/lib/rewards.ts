@@ -1,0 +1,187 @@
+import { desc, eq, isNull } from "drizzle-orm";
+import type { InferSelectModel } from "drizzle-orm";
+import { db, schema } from "@/lib/db";
+import {
+  applyRewards,
+  levelStateFromTotalXp,
+  totalXpFromLevelState,
+} from "@/lib/xp-calculator";
+import { getTodayLocal } from "@/lib/date-utils";
+
+type TaskRow = InferSelectModel<typeof schema.task>;
+type RewardLedgerRow = InferSelectModel<typeof schema.rewardLedger>;
+
+export interface RewardGrantResult {
+  awarded: boolean;
+  xpEarned: number;
+  goldEarned: number;
+  level: number;
+  xp: number;
+  xpToNext: number;
+  gold: number;
+  leveledUp: boolean;
+  levelsGained: number;
+}
+
+export interface RewardRevertResult {
+  reverted: boolean;
+  xpReverted: number;
+  goldReverted: number;
+  level: number;
+  xp: number;
+  xpToNext: number;
+  gold: number;
+}
+
+function completionKeyFor(task: TaskRow, date = getTodayLocal()): string {
+  return task.mode === "habit" ? `${task.id}:${date}` : `${task.id}:plan`;
+}
+
+function getEquippedKeys(): string[] {
+  return db
+    .select()
+    .from(schema.inventory)
+    .where(eq(schema.inventory.equipped, true))
+    .all()
+    .map((item) => item.itemKey);
+}
+
+function getOpenLedger(task: TaskRow): RewardLedgerRow | undefined {
+  const key = completionKeyFor(task);
+  const rows = db
+    .select()
+    .from(schema.rewardLedger)
+    .where(eq(schema.rewardLedger.taskId, task.id))
+    .orderBy(desc(schema.rewardLedger.id))
+    .all();
+
+  return rows.find(
+    (row) =>
+      !row.reversedAt &&
+      (row.completionKey === key || task.mode === "plan")
+  );
+}
+
+export function grantTaskReward(task: TaskRow): RewardGrantResult {
+  const existing = getOpenLedger(task);
+  const user = db.select().from(schema.user).where(eq(schema.user.id, 1)).get();
+  if (!user) throw new Error("User not found");
+
+  if (existing) {
+    return {
+      awarded: false,
+      xpEarned: existing.xpEarned,
+      goldEarned: existing.goldEarned,
+      level: user.level,
+      xp: user.xp,
+      xpToNext: user.xpToNext,
+      gold: user.gold,
+      leveledUp: false,
+      levelsGained: 0,
+    };
+  }
+
+  const result = applyRewards(
+    user,
+    task.xpReward,
+    task.goldReward,
+    getEquippedKeys()
+  );
+  const now = new Date().toISOString();
+
+  db.update(schema.user)
+    .set({
+      xp: result.xp,
+      xpToNext: result.xpToNext,
+      level: result.level,
+      gold: result.gold,
+      hp: result.hp,
+      updatedAt: now,
+    })
+    .where(eq(schema.user.id, 1))
+    .run();
+
+  db.insert(schema.rewardLedger)
+    .values({
+      taskId: task.id,
+      completionKey: completionKeyFor(task),
+      mode: task.mode,
+      taskTitle: task.title,
+      baseXp: task.xpReward,
+      baseGold: task.goldReward,
+      xpEarned: result.xpEarned,
+      goldEarned: task.goldReward,
+      levelBefore: user.level,
+      xpBefore: user.xp,
+      xpToNextBefore: user.xpToNext,
+      goldBefore: user.gold,
+      levelAfter: result.level,
+      xpAfter: result.xp,
+      xpToNextAfter: result.xpToNext,
+      goldAfter: result.gold,
+      completedDate: getTodayLocal(),
+      createdAt: now,
+      reversedAt: null,
+    })
+    .run();
+
+  return {
+    awarded: true,
+    xpEarned: result.xpEarned,
+    goldEarned: task.goldReward,
+    level: result.level,
+    xp: result.xp,
+    xpToNext: result.xpToNext,
+    gold: result.gold,
+    leveledUp: result.leveledUp,
+    levelsGained: result.levelsGained,
+  };
+}
+
+export function revertTaskReward(task: TaskRow): RewardRevertResult | null {
+  const ledger = getOpenLedger(task);
+  if (!ledger) return null;
+
+  const user = db.select().from(schema.user).where(eq(schema.user.id, 1)).get();
+  if (!user) throw new Error("User not found");
+
+  const totalXp = totalXpFromLevelState(user.level, user.xp);
+  const nextXpState = levelStateFromTotalXp(totalXp - ledger.xpEarned);
+  const nextGold = Math.max(0, user.gold - ledger.goldEarned);
+  const now = new Date().toISOString();
+
+  db.update(schema.user)
+    .set({
+      level: nextXpState.level,
+      xp: nextXpState.xp,
+      xpToNext: nextXpState.xpToNext,
+      gold: nextGold,
+      updatedAt: now,
+    })
+    .where(eq(schema.user.id, 1))
+    .run();
+
+  db.update(schema.rewardLedger)
+    .set({ reversedAt: now })
+    .where(eq(schema.rewardLedger.id, ledger.id))
+    .run();
+
+  return {
+    reverted: true,
+    xpReverted: ledger.xpEarned,
+    goldReverted: ledger.goldEarned,
+    level: nextXpState.level,
+    xp: nextXpState.xp,
+    xpToNext: nextXpState.xpToNext,
+    gold: nextGold,
+  };
+}
+
+export function getTotalEarnedGold(): number {
+  return db
+    .select()
+    .from(schema.rewardLedger)
+    .where(isNull(schema.rewardLedger.reversedAt))
+    .all()
+    .reduce((sum, row) => sum + row.goldEarned, 0);
+}
