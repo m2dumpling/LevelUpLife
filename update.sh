@@ -9,7 +9,7 @@ git pull origin main
 
 if git diff --name-only HEAD@{1} HEAD | grep -qE 'package.json|package-lock.json' || [ ! -x node_modules/.bin/next ]; then
     echo ">>> Dependencies changed or missing, installing..."
-    npm ci
+    npm ci --no-audit --no-fund
 fi
 
 SCHEMA_CHANGED=$(git diff --name-only HEAD@{1} HEAD | grep -c 'drizzle/schema.ts' || true)
