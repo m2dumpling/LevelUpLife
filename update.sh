@@ -7,8 +7,8 @@ cd /opt/levelup-life
 echo ">>> Pulling latest code..."
 git pull origin main
 
-if git diff --name-only HEAD@{1} HEAD | grep -qE 'package.json|package-lock.json'; then
-    echo ">>> Dependencies changed, installing..."
+if git diff --name-only HEAD@{1} HEAD | grep -qE 'package.json|package-lock.json' || [ ! -x node_modules/.bin/next ]; then
+    echo ">>> Dependencies changed or missing, installing..."
     npm ci
 fi
 
