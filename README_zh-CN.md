@@ -80,6 +80,7 @@ Next.js 16 · TypeScript · Tailwind CSS v4 · shadcn/ui · SQLite · Drizzle OR
 ```bash
 npm install
 cp .env.example .env          # 设置 AUTH_PASSWORD 和 JWT_SECRET
+npx drizzle-kit push --force  # 同步 SQLite schema
 npm run dev
 npx tsx drizzle/seed.ts       # 首次运行播种
 ```
@@ -123,6 +124,7 @@ cat .env | grep AUTH_PASSWORD    # ← 记下密码！
 
 ```bash
 npm ci                          # ⚠️ 不要加 --omit=dev，Tailwind 构建需要
+npx drizzle-kit push --force
 npm run build
 npx tsx drizzle/seed.ts         # 看到 🎉 种子数据播种完成！即可
 ```
@@ -191,9 +193,10 @@ cd /opt/levelup-life
 
 ```bash
 git pull origin main
+npm ci                            # package-lock 有变化时执行
 npm run build                     # ~20s
+npx drizzle-kit push --force      # 本次新增/更新 reward_ledger 等 schema 时必须执行
 pm2 reload ecosystem.config.cjs
-npx drizzle-kit push --force      # 仅 schema.ts 有改动时
 ```
 
 ---

@@ -121,7 +121,11 @@ export default function HomePage() {
     [completeTask, refreshStats, stats, habits, plans]
   );
 
-  const handleDelete = useCallback(async (id: number) => { await deleteTask(id); }, [deleteTask]);
+  const handleDelete = useCallback(async (id: number) => {
+    await deleteTask(id);
+    window.dispatchEvent(new Event("task-completed"));
+    refreshStats();
+  }, [deleteTask, refreshStats]);
 
   const handleEdit = useCallback(
     async (taskId: number, data: Record<string, unknown>) => {
@@ -135,7 +139,10 @@ export default function HomePage() {
   const handleUncomplete = useCallback(
     async (taskId: number) => {
       const result = await uncompleteTask(taskId);
-      if (result) refreshStats();
+      if (result) {
+        window.dispatchEvent(new Event("task-completed"));
+        refreshStats();
+      }
     },
     [uncompleteTask, refreshStats]
   );

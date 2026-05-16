@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { formatLocalDate as formatBusinessDate } from "@/lib/date-utils";
 
 // ── GitHub 风格 5 级绿色（暗色主题等效）──
 const COLORS = [
@@ -49,7 +50,7 @@ function generateWeekCells(data: Map<string, number>, today: Date, todayStr: str
   for (let i = 0; i < 7; i++) {
     const d = new Date(startOfWeek);
     d.setDate(startOfWeek.getDate() + i);
-    const dateStr = formatLocalDate(d);
+    const dateStr = formatBusinessDate(d);
     const xp = data.get(dateStr) ?? 0;
     cells.push({
       date: dateStr,
@@ -115,7 +116,7 @@ function generateYearCells(
   const rawCells: { date: string; dayOfWeek: number; isToday: boolean }[] = [];
   const cursor = new Date(start);
   while (cursor <= today) {
-    const ds = formatLocalDate(cursor);
+    const ds = formatBusinessDate(cursor);
     rawCells.push({ date: ds, dayOfWeek: cursor.getDay(), isToday: ds === todayStr });
     cursor.setDate(cursor.getDate() + 1);
   }
@@ -170,7 +171,7 @@ export function Heatmap() {
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayStr = formatLocalDate(today);
+  const todayStr = formatBusinessDate(today);
 
   const fetchData = useCallback(async () => {
     try {
@@ -520,10 +521,6 @@ function Legend({ cellSize }: { cellSize: number }) {
 // ═══════════════════════════════════════════
 // 工具函数
 // ═══════════════════════════════════════════
-function formatLocalDate(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
 function formatDateCN(dateStr: string): string {
   const d = new Date(dateStr + "T12:00:00");
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;

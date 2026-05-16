@@ -112,6 +112,29 @@ export const activityLog = sqliteTable("activity_log", {
   date: text("date").notNull(),
 });
 
+export const rewardLedger = sqliteTable("reward_ledger", {
+  id: integer("id").primaryKey(),
+  taskId: integer("task_id").notNull(),
+  completionKey: text("completion_key").notNull(),
+  mode: text("mode", { enum: ["habit", "plan"] }).notNull(),
+  taskTitle: text("task_title").notNull(),
+  baseXp: integer("base_xp").notNull(),
+  baseGold: integer("base_gold").notNull(),
+  xpEarned: integer("xp_earned").notNull(),
+  goldEarned: integer("gold_earned").notNull(),
+  levelBefore: integer("level_before").notNull(),
+  xpBefore: integer("xp_before").notNull(),
+  xpToNextBefore: integer("xp_to_next_before").notNull(),
+  goldBefore: integer("gold_before").notNull(),
+  levelAfter: integer("level_after").notNull(),
+  xpAfter: integer("xp_after").notNull(),
+  xpToNextAfter: integer("xp_to_next_after").notNull(),
+  goldAfter: integer("gold_after").notNull(),
+  completedDate: text("completed_date").notNull(),
+  createdAt: text("created_at").notNull(),
+  reversedAt: text("reversed_at"),
+});
+
 export const inventory = sqliteTable("inventory", {
   id: integer("id").primaryKey(),
   itemKey: text("item_key").notNull().unique(),

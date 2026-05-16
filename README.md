@@ -80,6 +80,7 @@ Next.js 16 · TypeScript · Tailwind CSS v4 · shadcn/ui · SQLite · Drizzle OR
 ```bash
 npm install
 cp .env.example .env          # Set AUTH_PASSWORD + JWT_SECRET
+npx drizzle-kit push --force  # Sync SQLite schema
 npm run dev
 npx tsx drizzle/seed.ts       # First run only
 ```
@@ -123,6 +124,7 @@ cat .env | grep AUTH_PASSWORD    # ← save this!
 
 ```bash
 npm ci                          # ⚠️ NO --omit=dev — Tailwind needs it
+npx drizzle-kit push --force
 npm run build
 npx tsx drizzle/seed.ts         # prints: 🎉 种子数据播种完成！
 ```
@@ -187,9 +189,10 @@ Or manual:
 
 ```bash
 git pull origin main
+npm ci                            # run when package-lock changed
 npm run build                     # ~20s
+npx drizzle-kit push --force      # required when reward_ledger/schema changes
 pm2 reload ecosystem.config.cjs
-npx drizzle-kit push --force      # only if schema.ts changed
 ```
 
 ---
