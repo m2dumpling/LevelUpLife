@@ -48,7 +48,7 @@ export function LotteryButton() {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-card border border-border rounded-xl p-6 max-w-sm w-[calc(100%-2rem)] text-center space-y-4"
+            className="relative bg-card border border-border rounded-xl p-6 max-w-sm w-[calc(100%-2rem)] text-center space-y-4"
           >
             <button onClick={() => setOpen(false)} className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
             <div className="text-3xl">🎰</div>

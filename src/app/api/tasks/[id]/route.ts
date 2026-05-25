@@ -70,9 +70,9 @@ export async function PATCH(
 
     const body = await request.json();
 
-    // ── 反作弊：完成操作频率限制（每分钟最多 2 次） ──
+    // ── 反作弊：完成操作频率限制（每分钟最多 5 次） ──
     if (body.completed === true) {
-      const rate = checkRate(userId, "task_complete", 2);
+      const rate = checkRate(userId, "task_complete", 5);
       if (!rate.allowed) {
         return NextResponse.json({ error: rate.message }, { status: 429 });
       }

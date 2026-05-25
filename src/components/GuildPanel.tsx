@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   Shield,
   Users,
@@ -61,6 +62,7 @@ function formatTime(iso: string): string {
 /* ── 组件 ── */
 
 export function GuildPanel({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
   // 公会数据
   const [guildData, setGuildData] = useState<GuildData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -80,6 +82,9 @@ export function GuildPanel({ onClose }: { onClose: () => void }) {
   const [chatMsg, setChatMsg] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
+
+  // 当前用户
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   /* ── 数据获取 ── */
 
@@ -109,6 +114,13 @@ export function GuildPanel({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     fetchGuild();
   }, [fetchGuild]);
+
+  // 获取当前用户 ID
+  useEffect(() => {
+    fetch("/api/user").then(r => r.ok ? r.json() : null).then(u => {
+      if (u?.id) setCurrentUserId(u.id);
+    }).catch(() => {});
+  }, []);
 
   // 进入公会后拉取聊天 + 定时刷新
   useEffect(() => {
@@ -473,6 +485,18 @@ export function GuildPanel({ onClose }: { onClose: () => void }) {
                         会长
                       </span>
                     )}
+                    {/* 自己的退出按钮 */}
+                    {m.userId === currentUserId && (
+                      <button
+                        onClick={doLeave}
+                        disabled={actionLoading}
+                        className="text-[10px] text-destructive/50 hover:text-destructive ml-2 transition-colors"
+                        title="退出公会"
+                      >
+                        <LogOut className="w-3 h-3 inline mr-0.5" />
+                        退出
+                      </button>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] text-muted-foreground">
@@ -495,74 +519,22 @@ export function GuildPanel({ onClose }: { onClose: () => void }) {
             </div>
           )}
 
-          {/* ── 聊天 Tab ── */}
+          {/* ── 聊天 Tab ──  → 全屏聊天入口 */}
           {tab === "chat" && (
-            <>
-              <div className="flex-1 overflow-auto px-4 py-3 space-y-1 min-h-0">
-                {messages.length === 0 && (
-                  <div className="text-center py-10 text-muted-foreground text-sm">
-                    <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    <p>暂无消息</p>
-                    <p className="text-xs mt-1">发送第一条消息开始聊天吧</p>
-                  </div>
-                )}
-                {messages.map((msg) => (
-                  <div key={msg.id} className="py-1">
-                    <span className="text-[10px] text-muted-foreground/60 mr-1.5 tabular-nums">
-                      {formatTime(msg.createdAt)}
-                    </span>
-                    <span className="text-xs font-semibold text-foreground/80 mr-1">
-                      {msg.username}
-                    </span>
-                    <span className="text-xs text-foreground break-words">
-                      {msg.message}
-                    </span>
-                  </div>
-                ))}
-                <div ref={chatEndRef} />
+            <div className="flex-1 flex items-center justify-center p-5">
+              <div className="text-center space-y-4">
+                <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">公会聊天已升级为全屏模式</p>
+                <Button
+                  onClick={() => { onClose(); router.push("/chat"); }}
+                  className="gap-2"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  打开聊天大厅
+                </Button>
               </div>
-
-              {/* 输入区 */}
-              <div className="shrink-0 px-4 py-3 border-t border-border bg-muted/20">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="输入消息..."
-                    value={chatMsg}
-                    onChange={(e) => setChatMsg(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && doSend()}
-                    maxLength={500}
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={doSend}
-                    disabled={!chatMsg.trim()}
-                    size="sm"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </>
+            </div>
           )}
-
-          {/* 底部操作 */}
-          <div className="shrink-0 px-5 py-3 border-t border-border flex items-center justify-between">
-            <span className="text-[10px] text-muted-foreground">
-              {guildData.isLeader ? "你是会长" : "成员"}
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={doLeave}
-              disabled={actionLoading}
-              className="text-muted-foreground hover:text-destructive"
-            >
-              <LogOut className="w-3.5 h-3.5 mr-1" />
-              {guildData.isLeader && guildData.members.length > 1
-                ? "退出并转让"
-                : "退出公会"}
-            </Button>
-          </div>
         </>
       )}
     </div>
