@@ -20,6 +20,16 @@ npm run build
 if [ "$SCHEMA_CHANGED" -gt 0 ]; then
     echo ">>> Schema changed, syncing database..."
     npx drizzle-kit push --force
+
+    echo ">>> Running seed + admin role upgrade..."
+    npx tsx drizzle/seed.ts
+    npx tsx -e "
+const Database = require('better-sqlite3');
+const db = new Database(process.env.DATABASE_PATH || './data/levelup.db');
+const r = db.prepare('UPDATE user SET role = ? WHERE username = ? AND role != ?').run('admin', 'admin', 'admin');
+if (r.changes) console.log('Admin role upgraded');
+db.close();
+"
 fi
 
 echo ">>> Copying static assets to standalone..."
