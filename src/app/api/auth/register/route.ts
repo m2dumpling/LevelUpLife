@@ -21,21 +21,22 @@ function checkRateLimit(ip: string): boolean {
 export async function POST(request: Request) {
   try {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    if (!checkRateLimit(ip)) {
-      return NextResponse.json({ error: "注册太频繁，请一小时后再试" }, { status: 429 });
-    }
-
     const { username, password } = await request.json();
+
+    // 先校验输入合法性，合法请求才计入限流
     if (!username || !password) {
       return NextResponse.json({ error: "用户名和密码为必填项" }, { status: 400 });
     }
-
     if (!/^[a-zA-Z0-9_一-鿿]{2,20}$/.test(username)) {
       return NextResponse.json({ error: "用户名 2-20 位，仅支持字母、数字、下划线、中文" }, { status: 400 });
     }
-
     if (password.length < 4) {
       return NextResponse.json({ error: "密码至少 4 位" }, { status: 400 });
+    }
+
+    // 限流放在校验之后，避免无效请求消耗配额
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json({ error: "注册太频繁，请一小时后再试" }, { status: 429 });
     }
 
     const existing = db
