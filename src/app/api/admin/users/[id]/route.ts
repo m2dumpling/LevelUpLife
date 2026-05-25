@@ -40,6 +40,28 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   }
 }
 
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const userId = parseInt(id, 10);
+    if (isNaN(userId)) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+
+    const user = db.select().from(schema.user).where(eq(schema.user.id, userId)).get();
+    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (user.role === "admin") return NextResponse.json({ error: "不能修改管理员账户" }, { status: 403 });
+
+    const { banned } = await request.json();
+    if (typeof banned === "boolean") {
+      db.update(schema.user).set({ banned }).where(eq(schema.user.id, userId)).run();
+      return NextResponse.json({ success: true, banned });
+    }
+
+    return NextResponse.json({ error: "仅支持 banned 字段" }, { status: 400 });
+  } catch (e) {
+    return NextResponse.json({ error: "更新失败" }, { status: 500 });
+  }
+}
+
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;

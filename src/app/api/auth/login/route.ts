@@ -60,6 +60,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "用户名或密码错误" }, { status: 401 });
     }
 
+    if (user.banned) {
+      return NextResponse.json({ error: "账户已被冻结" }, { status: 403 });
+    }
+
     // 验证密码
     const valid = await verifyPassword(password, user.passwordHash);
     if (!valid) {

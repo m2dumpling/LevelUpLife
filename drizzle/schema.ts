@@ -22,6 +22,7 @@ export const user = sqliteTable("user", {
   storyProgress: text("story_progress").notNull().default("chapter_0"),
   hpPenaltyActive: integer("hp_penalty_active", { mode: "boolean" }).notNull().default(false),
   role: text("role").notNull().default("user"),
+  banned: integer("banned", { mode: "boolean" }).notNull().default(false),
   registerIp: text("register_ip"),
   registerCountry: text("register_country"),
   lastLoginIp: text("last_login_ip"),
