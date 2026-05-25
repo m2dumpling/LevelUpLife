@@ -59,6 +59,7 @@ async function seed() {
     db.insert(schema.user)
       .values({
         name: "勇者",
+        username: "admin",
         passwordHash: hashed,
         level: 1,
         xp: 0,
@@ -89,6 +90,7 @@ async function seed() {
     if (!existingKeys.has(ach.key)) {
       db.insert(schema.achievement)
         .values({
+          userId: 1,
           key: ach.key,
           title: ach.title,
           description: ach.description,
@@ -111,6 +113,7 @@ async function seed() {
     if (!existingChapterKeys.has(event.chapterKey)) {
       db.insert(schema.storyEvent)
         .values({
+          userId: 1,
           chapterKey: event.chapterKey,
           triggerCondition: event.triggerCondition,
           title: event.title,

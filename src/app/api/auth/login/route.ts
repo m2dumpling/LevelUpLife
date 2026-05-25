@@ -47,30 +47,30 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { password } = await request.json();
+    const { username, password } = await request.json();
 
-    if (!password || typeof password !== "string") {
-      return NextResponse.json({ error: "请输入密码" }, { status: 400 });
+    if (!username || !password) {
+      return NextResponse.json({ error: "请输入用户名和密码" }, { status: 400 });
     }
 
     // 查询用户
-    const user = db.select().from(schema.user).where(eq(schema.user.id, 1)).get();
+    const user = db.select().from(schema.user).where(eq(schema.user.username, username)).get();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "系统未初始化，请先运行种子脚本" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "用户名或密码错误" }, { status: 401 });
     }
 
     // 验证密码
     const valid = await verifyPassword(password, user.passwordHash);
     if (!valid) {
-      return NextResponse.json({ error: "密码错误" }, { status: 401 });
+      return NextResponse.json({ error: "用户名或密码错误" }, { status: 401 });
     }
 
+    // 更新最后登录时间
+    db.update(schema.user).set({ lastLoginDate: new Date().toISOString().split("T")[0] }).where(eq(schema.user.id, user.id)).run();
+
     // 签发 JWT
-    const token = await createToken();
+    const token = await createToken(user.id);
     const cookie = getCookieOptions();
 
     const response = NextResponse.json({ success: true });

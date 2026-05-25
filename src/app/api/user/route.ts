@@ -5,9 +5,11 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
+import { getUserId } from "@/lib/auth";
 
-export async function GET() {
-  const user = db.select().from(schema.user).where(eq(schema.user.id, 1)).get();
+export async function GET(request: Request) {
+  const userId = getUserId(request);
+  const user = db.select().from(schema.user).where(eq(schema.user.id, userId)).get();
 
   if (!user) {
     return NextResponse.json({ error: "用户不存在" }, { status: 404 });

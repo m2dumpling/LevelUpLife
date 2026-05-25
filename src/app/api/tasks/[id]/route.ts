@@ -1,16 +1,22 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
+import { getUserId } from "@/lib/auth";
 import { fillTaskRewards } from "@/lib/xp-calculator";
 import { getDaysAgoLocal, getTodayLocal } from "@/lib/date-utils";
 import { settleIfNeeded } from "@/lib/daily-settlement";
 import { grantTaskReward, revertTaskReward } from "@/lib/rewards";
 
-function recalculateHabitStreak(taskId: number, startDaysAgo = 0): number {
+function recalculateHabitStreak(taskId: number, userId: number, startDaysAgo = 0): number {
   const logs = db
     .select()
     .from(schema.habitLog)
-    .where(eq(schema.habitLog.taskId, taskId))
+    .where(
+      and(
+        eq(schema.habitLog.taskId, taskId),
+        eq(schema.habitLog.userId, userId)
+      )
+    )
     .all();
   const completedDates = new Set(logs.map((log) => log.completedAt));
 
@@ -21,12 +27,13 @@ function recalculateHabitStreak(taskId: number, startDaysAgo = 0): number {
   return streak;
 }
 
-function removeActivityLog(taskId: number, date?: string): void {
+function removeActivityLog(taskId: number, userId: number, date?: string): void {
   if (date) {
     db.delete(schema.activityLog)
       .where(
         and(
           eq(schema.activityLog.taskId, taskId),
+          eq(schema.activityLog.userId, userId),
           eq(schema.activityLog.date, date)
         )
       )
@@ -35,7 +42,12 @@ function removeActivityLog(taskId: number, date?: string): void {
   }
 
   db.delete(schema.activityLog)
-    .where(eq(schema.activityLog.taskId, taskId))
+    .where(
+      and(
+        eq(schema.activityLog.taskId, taskId),
+        eq(schema.activityLog.userId, userId)
+      )
+    )
     .run();
 }
 
@@ -50,13 +62,14 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid task id" }, { status: 400 });
     }
 
-    settleIfNeeded();
+    const userId = getUserId(request);
+    settleIfNeeded(userId);
 
     const body = await request.json();
     const task = db
       .select()
       .from(schema.task)
-      .where(eq(schema.task.id, taskId))
+      .where(and(eq(schema.task.id, taskId), eq(schema.task.userId, userId)))
       .get();
 
     if (!task) {
@@ -71,6 +84,7 @@ export async function PATCH(
         .where(
           and(
             eq(schema.habitLog.taskId, taskId),
+            eq(schema.habitLog.userId, userId),
             eq(schema.habitLog.completedAt, today)
           )
         )
@@ -84,13 +98,13 @@ export async function PATCH(
         });
       }
 
-      db.insert(schema.habitLog).values({ taskId, completedAt: today }).run();
+      db.insert(schema.habitLog).values({ userId, taskId, completedAt: today }).run();
 
-      const newStreak = recalculateHabitStreak(taskId);
+      const newStreak = recalculateHabitStreak(taskId, userId);
       const newBestStreak = Math.max(newStreak, task.bestStreak);
       db.update(schema.task)
         .set({ streakCount: newStreak, bestStreak: newBestStreak })
-        .where(eq(schema.task.id, taskId))
+        .where(and(eq(schema.task.id, taskId), eq(schema.task.userId, userId)))
         .run();
 
       const nowISO = new Date().toISOString();
@@ -105,6 +119,7 @@ export async function PATCH(
       if (result.awarded) {
         db.insert(schema.activityLog)
           .values({
+            userId,
             taskId,
             taskTitle: task.title,
             mode: task.mode,
@@ -139,6 +154,7 @@ export async function PATCH(
         .where(
           and(
             eq(schema.habitLog.taskId, taskId),
+            eq(schema.habitLog.userId, userId),
             eq(schema.habitLog.completedAt, today)
           )
         )
@@ -148,16 +164,17 @@ export async function PATCH(
         .where(
           and(
             eq(schema.habitLog.taskId, taskId),
+            eq(schema.habitLog.userId, userId),
             eq(schema.habitLog.completedAt, today)
           )
         )
         .run();
-      removeActivityLog(taskId, today);
+      removeActivityLog(taskId, userId, today);
 
-      const recalculatedStreak = recalculateHabitStreak(taskId, 1);
+      const recalculatedStreak = recalculateHabitStreak(taskId, userId, 1);
       db.update(schema.task)
         .set({ streakCount: recalculatedStreak })
-        .where(eq(schema.task.id, taskId))
+        .where(and(eq(schema.task.id, taskId), eq(schema.task.userId, userId)))
         .run();
 
       const reverted = existingLog
@@ -188,7 +205,7 @@ export async function PATCH(
       const nowISO = new Date().toISOString();
       db.update(schema.task)
         .set({ completed: true, completedAt: nowISO, status: "completed" })
-        .where(eq(schema.task.id, taskId))
+        .where(and(eq(schema.task.id, taskId), eq(schema.task.userId, userId)))
         .run();
 
       const completedTask = {
@@ -202,6 +219,7 @@ export async function PATCH(
       if (result.awarded) {
         db.insert(schema.activityLog)
           .values({
+            userId,
             taskId,
             taskTitle: task.title,
             mode: task.mode,
@@ -233,9 +251,9 @@ export async function PATCH(
 
       db.update(schema.task)
         .set({ completed: false, completedAt: null, status: "in_progress" })
-        .where(eq(schema.task.id, taskId))
+        .where(and(eq(schema.task.id, taskId), eq(schema.task.userId, userId)))
         .run();
-      removeActivityLog(taskId);
+      removeActivityLog(taskId, userId);
 
       return NextResponse.json({
         ...task,
@@ -278,7 +296,7 @@ export async function PATCH(
       const updated = db
         .update(schema.task)
         .set(updateData)
-        .where(eq(schema.task.id, taskId))
+        .where(and(eq(schema.task.id, taskId), eq(schema.task.userId, userId)))
         .returning()
         .get();
 
@@ -293,7 +311,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -303,10 +321,12 @@ export async function DELETE(
       return NextResponse.json({ error: "Invalid task id" }, { status: 400 });
     }
 
+    const userId = getUserId(request);
+
     const task = db
       .select()
       .from(schema.task)
-      .where(eq(schema.task.id, taskId))
+      .where(and(eq(schema.task.id, taskId), eq(schema.task.userId, userId)))
       .get();
 
     if (task) {
@@ -321,6 +341,7 @@ export async function DELETE(
           .where(
             and(
               eq(schema.habitLog.taskId, taskId),
+              eq(schema.habitLog.userId, userId),
               eq(schema.habitLog.completedAt, today)
             )
           )
@@ -332,10 +353,12 @@ export async function DELETE(
     }
 
     db.delete(schema.habitLog)
-      .where(eq(schema.habitLog.taskId, taskId))
+      .where(and(eq(schema.habitLog.taskId, taskId), eq(schema.habitLog.userId, userId)))
       .run();
-    removeActivityLog(taskId);
-    db.delete(schema.task).where(eq(schema.task.id, taskId)).run();
+    removeActivityLog(taskId, userId);
+    db.delete(schema.task)
+      .where(and(eq(schema.task.id, taskId), eq(schema.task.userId, userId)))
+      .run();
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -20,24 +20,30 @@ function getJwtSecret(): Uint8Array {
 }
 
 /** 签发 JWT，写入 httpOnly cookie */
-export async function createToken(): Promise<string> {
+export async function createToken(userId: number): Promise<string> {
   const secret = getJwtSecret();
-  return new SignJWT({ sub: "hero" })
+  return new SignJWT({ sub: String(userId) })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(JWT_EXPIRATION)
     .sign(secret);
 }
 
-/** 验证 JWT 是否有效 */
-export async function verifyToken(token: string): Promise<boolean> {
+/** 从 JWT 中提取 userId，无效返回 null */
+export async function getUserIdFromToken(token: string): Promise<number | null> {
   try {
     const secret = getJwtSecret();
-    await jwtVerify(token, secret);
-    return true;
+    const { payload } = await jwtVerify(token, secret);
+    const id = Number(payload.sub);
+    return isNaN(id) ? null : id;
   } catch {
-    return false;
+    return null;
   }
+}
+
+/** 验证 JWT 是否有效 */
+export async function verifyToken(token: string): Promise<boolean> {
+  return (await getUserIdFromToken(token)) !== null;
 }
 
 /** Cookie 配置 */
@@ -60,6 +66,13 @@ export function getCookieOptions(): {
     path: "/",
     maxAge: thirtyDays,
   };
+}
+
+/** 从请求中获取 userId（由 middleware 注入 x-user-id header） */
+export function getUserId(request: Request): number {
+  const header = request.headers.get("x-user-id");
+  if (!header) throw new Error("未登录");
+  return Number(header);
 }
 
 /** Cookie 名称常量 */

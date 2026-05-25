@@ -1,17 +1,20 @@
 import { NextResponse } from "next/server";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
+import { getUserId } from "@/lib/auth";
 import { fillTaskRewards } from "@/lib/xp-calculator";
 import { compareDates, getTodayLocal } from "@/lib/date-utils";
 import { settleIfNeeded } from "@/lib/daily-settlement";
 
-export async function GET() {
-  settleIfNeeded();
+export async function GET(request: Request) {
+  const userId = getUserId(request);
+  settleIfNeeded(userId);
   const today = getTodayLocal();
 
   let tasks = db
     .select()
     .from(schema.task)
+    .where(eq(schema.task.userId, userId))
     .orderBy(asc(schema.task.sortOrder))
     .all();
 
@@ -25,7 +28,7 @@ export async function GET() {
     ) {
       db.update(schema.task)
         .set({ status: "pending" })
-        .where(eq(schema.task.id, task.id))
+        .where(and(eq(schema.task.id, task.id), eq(schema.task.userId, userId)))
         .run();
       repaired = true;
     }
@@ -35,6 +38,7 @@ export async function GET() {
     tasks = db
       .select()
       .from(schema.task)
+      .where(eq(schema.task.userId, userId))
       .orderBy(asc(schema.task.sortOrder))
       .all();
   }
@@ -42,7 +46,12 @@ export async function GET() {
   const todayLogs = db
     .select()
     .from(schema.habitLog)
-    .where(eq(schema.habitLog.completedAt, today))
+    .where(
+      and(
+        eq(schema.habitLog.userId, userId),
+        eq(schema.habitLog.completedAt, today)
+      )
+    )
     .all();
   const todayCompletedIds = new Set(todayLogs.map((log) => log.taskId));
 
@@ -61,7 +70,7 @@ export async function GET() {
     ) {
       db.update(schema.task)
         .set({ status: "failed" })
-        .where(eq(schema.task.id, task.id))
+        .where(and(eq(schema.task.id, task.id), eq(schema.task.userId, userId)))
         .run();
       return { ...task, status: "failed" as const };
     }
@@ -74,6 +83,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const userId = getUserId(request);
     const body = await request.json();
     const { title, mode, description, difficulty } = body;
 
@@ -97,6 +107,7 @@ export async function POST(request: Request) {
     const task = db
       .insert(schema.task)
       .values({
+        userId,
         title,
         mode: mode as "habit" | "plan",
         description: description || null,

@@ -1,4 +1,4 @@
-// LevelUp Life v2.0 — RPG 任务系统重构
+// LevelUp Life v3.0 — 多用户 RPG 任务系统
 //
 // task.mode = "habit" → 日常任务 (Daily Quest)
 // task.mode = "plan"  → 主线/支线任务 (Quest)
@@ -8,6 +8,7 @@ import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 export const user = sqliteTable("user", {
   id: integer("id").primaryKey(),
   name: text("name").notNull().default("勇者"),
+  username: text("username").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   level: integer("level").notNull().default(1),
   xp: integer("xp").notNull().default(0),
@@ -19,7 +20,6 @@ export const user = sqliteTable("user", {
   streakDays: integer("streak_days").notNull().default(0),
   bestStreak: integer("best_streak").notNull().default(0),
   storyProgress: text("story_progress").notNull().default("chapter_0"),
-  // ── HP 惩罚系统 ──
   hpPenaltyActive: integer("hp_penalty_active", { mode: "boolean" }).notNull().default(false),
   lastSettlementDate: text("last_settlement_date"),
   lastLoginDate: text("last_login_date"),
@@ -29,55 +29,41 @@ export const user = sqliteTable("user", {
 
 export const task = sqliteTable("task", {
   id: integer("id").primaryKey(),
+  userId: integer("user_id").notNull(),
   mode: text("mode", { enum: ["habit", "plan"] }).notNull(),
   title: text("title").notNull(),
   description: text("description"),
-  // ── 难度（决定 XP/金币奖励基数）──
-  difficulty: text("difficulty", {
-    enum: ["trivial", "easy", "medium", "hard", "heroic"],
-  })
-    .notNull()
-    .default("easy"),
+  difficulty: text("difficulty", { enum: ["trivial", "easy", "medium", "hard", "heroic"] }).notNull().default("easy"),
   xpReward: integer("xp_reward").notNull(),
   goldReward: integer("gold_reward").notNull(),
-  // ── 日常任务 (mode=habit) 专属字段 ──
-  frequency: text("frequency", {
-    enum: ["daily", "weekly", "monthly"],
-  }).default("daily"),
-  timeOfDay: text("time_of_day", {
-    enum: ["morning", "afternoon", "evening", "anytime"],
-  }).default("anytime"),
+  frequency: text("frequency", { enum: ["daily", "weekly", "monthly"] }).default("daily"),
+  timeOfDay: text("time_of_day", { enum: ["morning", "afternoon", "evening", "anytime"] }).default("anytime"),
   frequencyDays: text("frequency_days"),
   reminderTime: text("reminder_time"),
   streakCount: integer("streak_count").notNull().default(0),
   bestStreak: integer("best_streak").notNull().default(0),
-  // ── 主线/支线任务 (mode=plan) 专属字段 ──
   targetDate: text("target_date"),
-  status: text("status", {
-    enum: ["pending", "in_progress", "completed", "failed"],
-  }).default("pending"),
-  // ── 日常任务 (mode=habit) 可选日期范围 ──
+  status: text("status", { enum: ["pending", "in_progress", "completed", "failed"] }).default("pending"),
   startDate: text("start_date"),
   endDate: text("end_date"),
-  // ── 废弃字段（保留以兼容旧数据库）──
   dueDate: text("due_date"),
-  // ── 通用 ──
   completed: integer("completed", { mode: "boolean" }).notNull().default(false),
   completedAt: text("completed_at"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at").notNull(),
 });
 
-/** 日常任务打卡日志：每次打卡一条记录 */
 export const habitLog = sqliteTable("habit_log", {
   id: integer("id").primaryKey(),
+  userId: integer("user_id").notNull(),
   taskId: integer("task_id").notNull(),
   completedAt: text("completed_at").notNull(),
 });
 
 export const achievement = sqliteTable("achievement", {
   id: integer("id").primaryKey(),
-  key: text("key").notNull().unique(),
+  userId: integer("user_id").notNull(),
+  key: text("key").notNull(),
   title: text("title").notNull(),
   description: text("description").notNull(),
   icon: text("icon").notNull(),
@@ -88,21 +74,21 @@ export const achievement = sqliteTable("achievement", {
 
 export const storyEvent = sqliteTable("story_event", {
   id: integer("id").primaryKey(),
+  userId: integer("user_id").notNull(),
   chapterKey: text("chapter_key").notNull(),
   triggerCondition: text("trigger_condition").notNull(),
   title: text("title").notNull(),
   dialogue: text("dialogue").notNull(),
   npcName: text("npc_name").notNull().default("神秘老人"),
   reward: text("reward"),
-  isTriggered: integer("is_triggered", { mode: "boolean" })
-    .notNull()
-    .default(false),
+  isTriggered: integer("is_triggered", { mode: "boolean" }).notNull().default(false),
   triggeredAt: text("triggered_at"),
   sortOrder: integer("sort_order").notNull().default(0),
 });
 
 export const activityLog = sqliteTable("activity_log", {
   id: integer("id").primaryKey(),
+  userId: integer("user_id").notNull(),
   taskId: integer("task_id"),
   taskTitle: text("task_title").notNull(),
   mode: text("mode", { enum: ["habit", "plan"] }).notNull(),
@@ -114,6 +100,7 @@ export const activityLog = sqliteTable("activity_log", {
 
 export const rewardLedger = sqliteTable("reward_ledger", {
   id: integer("id").primaryKey(),
+  userId: integer("user_id").notNull(),
   taskId: integer("task_id").notNull(),
   completionKey: text("completion_key").notNull(),
   mode: text("mode", { enum: ["habit", "plan"] }).notNull(),
@@ -137,7 +124,8 @@ export const rewardLedger = sqliteTable("reward_ledger", {
 
 export const inventory = sqliteTable("inventory", {
   id: integer("id").primaryKey(),
-  itemKey: text("item_key").notNull().unique(),
+  userId: integer("user_id").notNull(),
+  itemKey: text("item_key").notNull(),
   quantity: integer("quantity").notNull().default(0),
   equipped: integer("equipped", { mode: "boolean" }).notNull().default(false),
 });

@@ -4,12 +4,14 @@
  */
 
 import { NextResponse } from "next/server";
+import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { getUserId } from "@/lib/auth";
 import { MEDAL_RECIPES } from "@/lib/shop-data";
 
 export async function POST(request: Request) {
   try {
+    const userId = getUserId(request);
     const { medalKey } = await request.json();
     if (!medalKey) {
       return NextResponse.json({ error: "缺少 medalKey" }, { status: 400 });
@@ -21,7 +23,16 @@ export async function POST(request: Request) {
     }
 
     // 检查矿石数量
-    const oreRow = db.select().from(schema.inventory).where(eq(schema.inventory.itemKey, recipe.oreKey)).get();
+    const oreRow = db
+      .select()
+      .from(schema.inventory)
+      .where(
+        and(
+          eq(schema.inventory.userId, userId),
+          eq(schema.inventory.itemKey, recipe.oreKey)
+        )
+      )
+      .get();
     const oreQty = oreRow?.quantity ?? 0;
     if (oreQty < recipe.oreRequired) {
       return NextResponse.json({ error: `材料不足，需要 ${recipe.oreRequired} 个矿石，当前 ${oreQty} 个` }, { status: 400 });
@@ -29,29 +40,59 @@ export async function POST(request: Request) {
 
     // 扣矿石
     if (oreQty === recipe.oreRequired) {
-      db.delete(schema.inventory).where(eq(schema.inventory.itemKey, recipe.oreKey)).run();
+      db.delete(schema.inventory)
+        .where(
+          and(
+            eq(schema.inventory.userId, userId),
+            eq(schema.inventory.itemKey, recipe.oreKey)
+          )
+        )
+        .run();
     } else {
       db.update(schema.inventory)
         .set({ quantity: oreQty - recipe.oreRequired })
-        .where(eq(schema.inventory.itemKey, recipe.oreKey))
+        .where(
+          and(
+            eq(schema.inventory.userId, userId),
+            eq(schema.inventory.itemKey, recipe.oreKey)
+          )
+        )
         .run();
     }
 
     // 加奖牌（upsert）
-    const medalRow = db.select().from(schema.inventory).where(eq(schema.inventory.itemKey, medalKey)).get();
+    const medalRow = db
+      .select()
+      .from(schema.inventory)
+      .where(
+        and(
+          eq(schema.inventory.userId, userId),
+          eq(schema.inventory.itemKey, medalKey)
+        )
+      )
+      .get();
     if (medalRow) {
       db.update(schema.inventory)
         .set({ quantity: medalRow.quantity + 1 })
-        .where(eq(schema.inventory.itemKey, medalKey))
+        .where(
+          and(
+            eq(schema.inventory.userId, userId),
+            eq(schema.inventory.itemKey, medalKey)
+          )
+        )
         .run();
     } else {
       db.insert(schema.inventory)
-        .values({ itemKey: medalKey, quantity: 1, equipped: false })
+        .values({ userId, itemKey: medalKey, quantity: 1, equipped: false })
         .run();
     }
 
     // 返回更新后的背包
-    const allRows = db.select().from(schema.inventory).all();
+    const allRows = db
+      .select()
+      .from(schema.inventory)
+      .where(eq(schema.inventory.userId, userId))
+      .all();
     const inventory: Record<string, { quantity: number; equipped: boolean }> = {};
     for (const row of allRows) {
       inventory[row.itemKey] = { quantity: row.quantity, equipped: row.equipped };

@@ -64,7 +64,7 @@ function getOpenLedger(task: TaskRow): RewardLedgerRow | undefined {
 
 export function grantTaskReward(task: TaskRow): RewardGrantResult {
   const existing = getOpenLedger(task);
-  const user = db.select().from(schema.user).where(eq(schema.user.id, 1)).get();
+  const user = db.select().from(schema.user).where(eq(schema.user.id, task.userId)).get();
   if (!user) throw new Error("User not found");
 
   if (existing) {
@@ -98,11 +98,12 @@ export function grantTaskReward(task: TaskRow): RewardGrantResult {
       hp: result.hp,
       updatedAt: now,
     })
-    .where(eq(schema.user.id, 1))
+    .where(eq(schema.user.id, task.userId))
     .run();
 
   db.insert(schema.rewardLedger)
     .values({
+      userId: task.userId,
       taskId: task.id,
       completionKey: completionKeyFor(task),
       mode: task.mode,
@@ -142,7 +143,7 @@ export function revertTaskReward(task: TaskRow): RewardRevertResult | null {
   const ledger = getOpenLedger(task);
   if (!ledger) return null;
 
-  const user = db.select().from(schema.user).where(eq(schema.user.id, 1)).get();
+  const user = db.select().from(schema.user).where(eq(schema.user.id, task.userId)).get();
   if (!user) throw new Error("User not found");
 
   const totalXp = totalXpFromLevelState(user.level, user.xp);
@@ -158,7 +159,7 @@ export function revertTaskReward(task: TaskRow): RewardRevertResult | null {
       gold: nextGold,
       updatedAt: now,
     })
-    .where(eq(schema.user.id, 1))
+    .where(eq(schema.user.id, task.userId))
     .run();
 
   db.update(schema.rewardLedger)

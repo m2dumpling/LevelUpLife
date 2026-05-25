@@ -10,7 +10,7 @@ import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
 // 公开路由（无需登录）
-const PUBLIC_PATHS = ["/login", "/api/auth/login"];
+const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/auth/register"];
 
 // 静态资源（无需拦截）
 const STATIC_PREFIXES = ["/_next", "/favicon.ico"];
@@ -49,8 +49,10 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    await jwtVerify(token, getJwtSecret());
-    return NextResponse.next();
+    const { payload } = await jwtVerify(token, getJwtSecret());
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-user-id", String(payload.sub));
+    return NextResponse.next({ request: { headers: requestHeaders } });
   } catch {
     // Token 无效或过期
     const loginUrl = new URL("/login", request.url);
