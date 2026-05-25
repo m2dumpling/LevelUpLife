@@ -50,8 +50,16 @@ export async function middleware(request: NextRequest) {
 
   try {
     const { payload } = await jwtVerify(token, getJwtSecret());
+    const userId = String(payload.sub);
+    const role = (payload as { role?: string }).role || "user";
+
+    // 管理员路由保护
+    if ((pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) && role !== "admin") {
+      return NextResponse.json({ error: "无权访问" }, { status: 403 });
+    }
+
     const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-user-id", String(payload.sub));
+    requestHeaders.set("x-user-id", userId);
     return NextResponse.next({ request: { headers: requestHeaders } });
   } catch {
     // Token 无效或过期

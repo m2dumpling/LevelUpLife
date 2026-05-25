@@ -51,6 +51,8 @@ export async function POST(request: Request) {
 
     const now = new Date().toISOString();
     const passwordHash = await hashPassword(password);
+    const registerIp = request.headers.get("cf-connecting-ip") || ip;
+    const registerCountry = request.headers.get("cf-ipcountry") || null;
 
     const user = db
       .insert(schema.user)
@@ -58,6 +60,8 @@ export async function POST(request: Request) {
         username,
         name: username,
         passwordHash,
+        registerIp,
+        registerCountry,
         createdAt: now,
         updatedAt: now,
       })
@@ -73,7 +77,7 @@ export async function POST(request: Request) {
       db.insert(schema.storyEvent).values({ userId: user.id, chapterKey: evt.chapterKey, triggerCondition: evt.triggerCondition, title: evt.title, dialogue: evt.dialogue, npcName: evt.npcName, reward: evt.reward, isTriggered: false, sortOrder: evt.sortOrder }).run();
     }
 
-    const token = await createToken(user.id);
+    const token = await createToken(user.id, user.role || "user");
     const cookieOpts = getCookieOptions();
 
     const res = NextResponse.json({ success: true, username: user.username }, { status: 201 });

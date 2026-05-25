@@ -20,9 +20,9 @@ function getJwtSecret(): Uint8Array {
 }
 
 /** 签发 JWT，写入 httpOnly cookie */
-export async function createToken(userId: number): Promise<string> {
+export async function createToken(userId: number, role: string = "user"): Promise<string> {
   const secret = getJwtSecret();
-  return new SignJWT({ sub: String(userId) })
+  return new SignJWT({ sub: String(userId), role })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(JWT_EXPIRATION)

@@ -58,8 +58,9 @@ async function seed() {
 
     db.insert(schema.user)
       .values({
-        name: "勇者",
+        name: "系统管理员",
         username: "admin",
+        role: "admin",
         passwordHash: hashed,
         level: 1,
         xp: 0,

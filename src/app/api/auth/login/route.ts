@@ -66,11 +66,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "用户名或密码错误" }, { status: 401 });
     }
 
-    // 更新最后登录时间
-    db.update(schema.user).set({ lastLoginDate: new Date().toISOString().split("T")[0] }).where(eq(schema.user.id, user.id)).run();
+    // 更新最后登录时间和 IP
+    const loginIp = request.headers.get("cf-connecting-ip") || ip;
+    const loginCountry = request.headers.get("cf-ipcountry") || null;
+    db.update(schema.user)
+      .set({
+        lastLoginDate: new Date().toISOString().split("T")[0],
+        lastLoginIp: loginIp,
+        lastLoginCountry: loginCountry,
+      })
+      .where(eq(schema.user.id, user.id))
+      .run();
 
-    // 签发 JWT
-    const token = await createToken(user.id);
+    // 签发 JWT（携带 role）
+    const token = await createToken(user.id, user.role || "user");
     const cookie = getCookieOptions();
 
     const response = NextResponse.json({ success: true });
