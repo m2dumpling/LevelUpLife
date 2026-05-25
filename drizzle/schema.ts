@@ -135,3 +135,30 @@ export const inventory = sqliteTable("inventory", {
   quantity: integer("quantity").notNull().default(0),
   equipped: integer("equipped", { mode: "boolean" }).notNull().default(false),
 });
+
+// ── 世界 BOSS ──
+export const boss = sqliteTable("boss", {
+  id: integer("id").primaryKey(),
+  name: text("name").notNull(),
+  emoji: text("emoji").notNull().default("🐉"),
+  hp: integer("hp").notNull(),
+  maxHp: integer("max_hp").notNull(),
+  weekStart: text("week_start").notNull(),
+  defeated: integer("defeated", { mode: "boolean" }).notNull().default(false),
+});
+
+// ── BOSS 贡献记录 ──
+export const bossContribution = sqliteTable("boss_contribution", {
+  id: integer("id").primaryKey(),
+  bossId: integer("boss_id").notNull(),
+  userId: integer("user_id").notNull(),
+  damage: integer("damage").notNull().default(0),
+});
+
+// ── 每日抽奖记录 ──
+export const lotteryLog = sqliteTable("lottery_log", {
+  id: integer("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  prize: text("prize").notNull(),
+  date: text("date").notNull(),
+});

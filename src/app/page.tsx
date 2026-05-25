@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
+import { BossWidget } from "@/components/BossWidget";
 import { StatDashboard } from "@/components/StatDashboard";
 import { TaskList } from "@/components/TaskList";
 import { Heatmap } from "@/components/Heatmap";
@@ -13,6 +14,7 @@ import { AchievementPopup, triggerAchievementPopup } from "@/components/Achievem
 import { StoryDialog } from "@/components/StoryDialog";
 import { ShopDialog } from "@/components/ShopDialog";
 import { BackpackDialog } from "@/components/BackpackDialog";
+import { LotteryButton } from "@/components/LotteryButton";
 import { MonthlyView } from "@/components/MonthlyView";
 import { useTasks } from "@/hooks/useTasks";
 import { useStats } from "@/hooks/useStats";
@@ -93,6 +95,17 @@ export default function HomePage() {
     refreshInventory();
   }, [refreshInventory]);
 
+  const [npcMessage, setNpcMessage] = useState("");
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const msg = (e as CustomEvent).detail;
+      setNpcMessage(msg);
+      setTimeout(() => setNpcMessage(""), 5000);
+    };
+    window.addEventListener("npc-speak", handler);
+    return () => window.removeEventListener("npc-speak", handler);
+  }, []);
+
   useEffect(() => {
     const handler = () => refreshInventory();
     window.addEventListener("inventory-changed", handler);
@@ -102,7 +115,7 @@ export default function HomePage() {
 
   const handleComplete = useCallback(
     async (taskId: number) => {
-      const result = await completeTask(taskId);
+      const result: any = await completeTask(taskId);
       if (result) {
         window.dispatchEvent(new Event("task-completed"));
         refreshStats();
@@ -112,6 +125,9 @@ export default function HomePage() {
             level: result.newLevel,
             levelsGained: result.levelsGained || 1,
           });
+        }
+        if (result.npcVoice) {
+          window.dispatchEvent(new CustomEvent("npc-speak", { detail: result.npcVoice }));
         }
         if (stats) {
           checkAchievements(result, stats, [...habits, ...plans]);
@@ -176,9 +192,27 @@ export default function HomePage() {
         onClose={() => setLevelUpData({ open: false, level: 0, levelsGained: 0 })}
       />
       <StoryDialog event={storyDialog} onClose={() => setStoryDialog(null)} />
+
+      {/* NPC 语音气泡 */}
+      <AnimatePresence>
+        {npcMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-card border border-border rounded-lg px-4 py-2 shadow-lg text-sm text-foreground max-w-sm text-center"
+          >
+            {npcMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <Navbar stats={stats} />
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        {/* 世界 BOSS */}
+        <BossWidget />
+
         {/* 商店 + 背包快捷入口 */}
         <motion.div
           initial={{ opacity: 0, y: -8 }}
@@ -197,6 +231,7 @@ export default function HomePage() {
             onCraft={refreshInventory}
             onEquip={refreshInventory}
           />
+          <LotteryButton />
         </motion.div>
 
         <motion.section
