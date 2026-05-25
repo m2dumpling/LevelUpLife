@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Swords, Lock, ArrowRight } from "lucide-react";
@@ -11,10 +11,20 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!password.trim()) return;
+  // 移动端自动填充/输入法联想可能不触发 onChange，用 onInput 兜底
+  const syncPassword = () => {
+    const realValue = inputRef.current?.value ?? "";
+    setPassword(realValue);
+    setError("");
+  };
+
+  const handleSubmit = async (e?: React.FormEvent | React.KeyboardEvent) => {
+    if (e && "preventDefault" in e) e.preventDefault();
+    // 用 ref 取真实值，应对自动填充不触发 state 更新的情况
+    const realPassword = inputRef.current?.value ?? password;
+    if (!realPassword.trim()) return;
 
     setLoading(true);
     setError("");
@@ -23,7 +33,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password: realPassword }),
       });
 
       if (res.ok) {
@@ -37,6 +47,14 @@ export default function LoginPage() {
       setError("网络错误，请重试");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 回车直接登录
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      syncPassword(); // 先刷新 state
+      handleSubmit();
     }
   };
 
@@ -85,6 +103,7 @@ export default function LoginPage() {
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
+                ref={inputRef}
                 type="password"
                 placeholder="输入你的冒险密码..."
                 value={password}
@@ -92,6 +111,8 @@ export default function LoginPage() {
                   setPassword(e.target.value);
                   setError("");
                 }}
+                onInput={syncPassword}
+                onKeyDown={handleKeyDown}
                 className="w-full pl-10 pr-4 py-3 bg-card border-2 border-border rounded-xl
                            text-foreground placeholder:text-muted-foreground/50
                            focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20

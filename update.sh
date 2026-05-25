@@ -22,6 +22,11 @@ if [ "$SCHEMA_CHANGED" -gt 0 ]; then
     npx drizzle-kit push --force
 fi
 
+echo ">>> Copying static assets to standalone..."
+rm -rf .next/standalone/.next/static .next/standalone/public 2>/dev/null
+cp -r .next/static .next/standalone/.next/static
+cp -r public .next/standalone/public
+
 echo ">>> Reloading pm2 app..."
 pm2 reload ecosystem.config.cjs
 
