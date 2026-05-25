@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, gte } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
+import { checkRate } from "@/lib/rate-limiter";
 import { fillTaskRewards } from "@/lib/xp-calculator";
 import { compareDates, getTodayLocal } from "@/lib/date-utils";
 import { settleIfNeeded } from "@/lib/daily-settlement";
@@ -85,11 +86,40 @@ export async function POST(request: Request) {
   try {
     const userId = getUserId(request);
     const body = await request.json();
+
+    // ── 反作弊：频率限制（每分钟最多 3 次创建） ──
+    const rate = checkRate(userId, "task_create", 3);
+    if (!rate.allowed) {
+      return NextResponse.json({ error: rate.message }, { status: 429 });
+    }
+
     const { title, mode, description, difficulty } = body;
 
     if (!title || !mode) {
       return NextResponse.json(
         { error: "Title and mode are required" },
+        { status: 400 }
+      );
+    }
+
+    // ── 反作弊：检查相同标题刷任务（1小时内相同标题超过3个） ──
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const sameTitleCount = db
+      .select()
+      .from(schema.task)
+      .where(
+        and(
+          eq(schema.task.userId, userId),
+          eq(schema.task.title, title.trim()),
+          gte(schema.task.createdAt, oneHourAgo)
+        )
+      )
+      .all()
+      .length;
+
+    if (sameTitleCount >= 3) {
+      return NextResponse.json(
+        { error: "检测到异常行为，请勿刷任务" },
         { status: 400 }
       );
     }

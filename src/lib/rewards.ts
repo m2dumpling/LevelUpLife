@@ -7,6 +7,10 @@ import {
   totalXpFromLevelState,
 } from "@/lib/xp-calculator";
 import { getTodayLocal } from "@/lib/date-utils";
+import { getPetBuff } from "@/lib/pet-buffs";
+import { getClassBonus } from "@/lib/class-analyzer";
+import { getVillageEffects } from "@/lib/village";
+import { getWeatherBonusForTaskSync } from "@/lib/weather";
 
 type TaskRow = InferSelectModel<typeof schema.task>;
 type RewardLedgerRow = InferSelectModel<typeof schema.rewardLedger>;
@@ -81,10 +85,40 @@ export function grantTaskReward(task: TaskRow): RewardGrantResult {
     };
   }
 
+  // ── 职业加成 ──
+  const classBonus = getClassBonus(
+    task.userId,
+    task.mode,
+    task.difficulty,
+    task.timeOfDay || "anytime",
+    task.title
+  );
+
+  // ── 天气加成（同步缓存读取） ──
+  const weatherMultiplier = getWeatherBonusForTaskSync(task.userId, task.title);
+
+  // ── 村庄图书馆 XP 加成 ──
+  const villageEffects = getVillageEffects(task.userId);
+
+  // ── 宠物加成 ──
+  const petBuff = getPetBuff(task.userId);
+
+  // 合并加成倍率
+  const combinedXpMultiplier =
+    classBonus.xpBonus *
+    weatherMultiplier *
+    villageEffects.xpMultiplier *
+    (1 + petBuff.xpBonus / 100);
+  const combinedGoldMultiplier =
+    classBonus.goldBonus * (1 + petBuff.goldBonus / 100);
+
+  const adjustedXp = Math.round(task.xpReward * combinedXpMultiplier);
+  const adjustedGold = Math.round(task.goldReward * combinedGoldMultiplier);
+
   const result = applyRewards(
     user,
-    task.xpReward,
-    task.goldReward,
+    adjustedXp,
+    adjustedGold,
     getEquippedKeys()
   );
   const now = new Date().toISOString();
@@ -111,7 +145,7 @@ export function grantTaskReward(task: TaskRow): RewardGrantResult {
       baseXp: task.xpReward,
       baseGold: task.goldReward,
       xpEarned: result.xpEarned,
-      goldEarned: task.goldReward,
+      goldEarned: adjustedGold,
       levelBefore: user.level,
       xpBefore: user.xp,
       xpToNextBefore: user.xpToNext,
@@ -129,7 +163,7 @@ export function grantTaskReward(task: TaskRow): RewardGrantResult {
   return {
     awarded: true,
     xpEarned: result.xpEarned,
-    goldEarned: task.goldReward,
+    goldEarned: adjustedGold,
     level: result.level,
     xp: result.xp,
     xpToNext: result.xpToNext,

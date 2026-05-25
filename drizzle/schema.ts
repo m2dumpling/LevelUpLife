@@ -29,6 +29,7 @@ export const user = sqliteTable("user", {
   lastLoginCountry: text("last_login_country"),
   lastSettlementDate: text("last_settlement_date"),
   lastLoginDate: text("last_login_date"),
+  city: text("city"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
@@ -161,4 +162,84 @@ export const lotteryLog = sqliteTable("lottery_log", {
   userId: integer("user_id").notNull(),
   prize: text("prize").notNull(),
   date: text("date").notNull(),
+});
+
+// ── 基地建设 ──
+export const village = sqliteTable("village", {
+  id: integer("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  stone: integer("stone").notNull().default(0),
+  houses: integer("houses").notNull().default(1),
+  library: integer("library").notNull().default(1),
+  market: integer("market").notNull().default(1),
+  fountain: integer("fountain").notNull().default(1),
+  castle: integer("castle").notNull().default(1),
+});
+
+// ── 宠物 ──
+export const pet = sqliteTable("pet", {
+  id: integer("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  petType: text("pet_type").notNull(),
+  stage: integer("stage").notNull().default(0),
+  hatchedAt: text("hatched_at"),
+  fedToday: integer("fed_today", { mode: "boolean" }).notNull().default(false),
+});
+
+// ── 公会 ──
+export const guild = sqliteTable("guild", {
+  id: integer("id").primaryKey(),
+  name: text("name").notNull(),
+  motto: text("motto").notNull().default(""),
+  inviteCode: text("invite_code").notNull().unique(),
+  leaderId: integer("leader_id").notNull(),
+  hp: integer("hp").notNull().default(100),
+  maxHp: integer("max_hp").notNull().default(100),
+  createdAt: text("created_at").notNull(),
+});
+
+export const guildMember = sqliteTable("guild_member", {
+  id: integer("id").primaryKey(),
+  guildId: integer("guild_id").notNull(),
+  userId: integer("user_id").notNull(),
+  joinedAt: text("joined_at").notNull(),
+});
+
+export const guildChat = sqliteTable("guild_chat", {
+  id: integer("id").primaryKey(),
+  guildId: integer("guild_id").notNull(),
+  userId: integer("user_id").notNull(),
+  username: text("username").notNull(),
+  message: text("message").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
+// ── 职业 ──
+export const userClass = sqliteTable("user_class", {
+  id: integer("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  className: text("class_name").notNull(),
+  assignedAt: text("assigned_at").notNull(),
+});
+
+// ── PvP ──
+export const pvpMatch = sqliteTable("pvp_match", {
+  id: integer("id").primaryKey(),
+  type: text("type").notNull(),
+  player1Id: integer("player1_id").notNull(),
+  player2Id: integer("player2_id"),
+  bet: integer("bet").notNull().default(20),
+  winnerId: integer("winner_id"),
+  status: text("status").notNull().default("waiting"),
+  result: text("result"),
+  createdAt: text("created_at").notNull(),
+});
+
+// ── 通用限速 ──
+export const rateLimit = sqliteTable("rate_limit", {
+  id: integer("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  actionType: text("action_type").notNull(),
+  count: integer("count").notNull().default(0),
+  windowStart: text("window_start").notNull(),
 });

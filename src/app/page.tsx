@@ -16,6 +16,10 @@ import { ShopDialog } from "@/components/ShopDialog";
 import { BackpackDialog } from "@/components/BackpackDialog";
 import { LotteryButton } from "@/components/LotteryButton";
 import { MonthlyView } from "@/components/MonthlyView";
+import { PvPArena } from "@/components/PvPArena";
+import { GuildButton } from "@/components/GuildButton";
+import { WeatherBadge } from "@/components/WeatherBadge";
+import { VillageWidget } from "@/components/VillageWidget";
 import { useTasks } from "@/hooks/useTasks";
 import { useStats } from "@/hooks/useStats";
 import type { Task } from "@/hooks/useTasks";
@@ -78,6 +82,24 @@ export default function HomePage() {
   } | null>(null);
 
   const [inventory, setInventory] = useState<Record<string, { quantity: number; equipped: boolean }>>({});
+
+  const [classData, setClassData] = useState<{ name: string; emoji: string } | null>(null);
+
+  const fetchClass = useCallback(async () => {
+    try {
+      const res = await fetch("/api/class");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.name) setClassData(data);
+      }
+    } catch {
+      // 静默失败
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchClass();
+  }, [fetchClass]);
 
   const refreshInventory = useCallback(async () => {
     try {
@@ -213,13 +235,25 @@ export default function HomePage() {
         {/* 世界 BOSS */}
         <BossWidget />
 
-        {/* 商店 + 背包快捷入口 */}
+        {/* 天气 + 职业 + 快捷入口 */}
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 flex-wrap"
         >
+          <WeatherBadge />
+          {classData && (
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="flex items-center gap-1 text-xs bg-muted/30 px-2 py-0.5 rounded-full cursor-default"
+              title={`职业: ${classData.name}`}
+            >
+              <span>{classData.emoji}</span>
+              <span className="text-foreground">{classData.name}</span>
+            </motion.span>
+          )}
           <MonthlyView habits={habits} plans={plans} />
           <ShopDialog
             gold={stats?.gold ?? 0}
@@ -232,6 +266,8 @@ export default function HomePage() {
             onEquip={refreshInventory}
           />
           <LotteryButton />
+          <PvPArena />
+          <GuildButton />
         </motion.div>
 
         <motion.section
@@ -261,11 +297,20 @@ export default function HomePage() {
           />
         </motion.section>
 
+        {/* 村庄 */}
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.25 }}
+        >
+          <VillageWidget />
+        </motion.section>
+
         <motion.div
           className="grid grid-cols-1 lg:grid-cols-2 gap-6"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
         >
           <div className="bg-card rounded-xl p-4 border border-border">
             <Heatmap />

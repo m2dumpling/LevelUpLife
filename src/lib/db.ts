@@ -42,5 +42,12 @@ sqlite.exec(`
   )
 `);
 
+// 确保新增列存在（兼容旧数据库）
+try {
+  sqlite.exec("ALTER TABLE user ADD COLUMN city text");
+} catch {
+  // 列已存在
+}
+
 export const db = drizzle(sqlite, { schema });
 export { schema };

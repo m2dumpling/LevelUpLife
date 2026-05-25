@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
+import { checkRate } from "@/lib/rate-limiter";
 import { fillTaskRewards } from "@/lib/xp-calculator";
 import { getDaysAgoLocal, getTodayLocal } from "@/lib/date-utils";
 import { settleIfNeeded } from "@/lib/daily-settlement";
@@ -68,6 +69,15 @@ export async function PATCH(
     settleIfNeeded(userId);
 
     const body = await request.json();
+
+    // ── 反作弊：完成操作频率限制（每分钟最多 2 次） ──
+    if (body.completed === true) {
+      const rate = checkRate(userId, "task_complete", 2);
+      if (!rate.allowed) {
+        return NextResponse.json({ error: rate.message }, { status: 429 });
+      }
+    }
+
     const task = db
       .select()
       .from(schema.task)
