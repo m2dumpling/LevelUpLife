@@ -145,9 +145,10 @@ export function FriendButton({ open: controlledOpen, onOpenChange }: FriendButto
               <div className="space-y-2">
                 <div className="flex gap-2">
                   <input value={addFriendName} onChange={e => handleSearch(e.target.value)}
-                    placeholder="搜索用户名添加好友..."
+                    placeholder="搜索同公会成员..."
                     className="flex-1 px-3 py-1.5 bg-muted/50 border border-border rounded-md text-sm focus:outline-none focus:border-primary/40" />
                 </div>
+                <p className="text-[10px] text-muted-foreground">仅可搜索同公会成员，或通过公会成员列表直接添加</p>
                 {searching && <p className="text-xs text-muted-foreground">搜索中...</p>}
                 {addError && <p className="text-xs text-red-400">{addError}</p>}
                 {addSuccess && <p className="text-xs text-emerald-400">{addSuccess}</p>}
