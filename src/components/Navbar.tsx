@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Swords, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { MEDAL_RECIPES, sortByRarity, type MedalConfig } from "@/lib/shop-data";
 import type { UserStats } from "@/hooks/useTasks";
 
@@ -74,6 +75,7 @@ export function Navbar({ stats }: NavbarProps) {
               <span className="text-[10px] text-muted-foreground uppercase">G</span>
               <span className="text-sm font-bold text-amber-400">{stats.role === "admin" ? "∞" : stats.gold}</span>
             </div>
+            <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
               <LogOut className="w-4 h-4" />
             </Button>

@@ -64,7 +64,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-[oklch(0.12_0.03_260)] via-[oklch(0.14_0.02_260)] to-[oklch(0.1_0.04_260)]">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-primary/5 blur-3xl"
           animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 4, repeat: Infinity }} />

@@ -779,7 +779,7 @@ export function PvPArena({
         />
         )}
 
-        <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto bg-gradient-to-b from-gray-900 to-gray-950 border-gray-800 text-gray-100 p-0 gap-0">
+        <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto bg-gradient-to-b from-gray-900 to-gray-950 border-gray-800 text-gray-100 p-0 gap-0 dark">
           <div className="sticky top-0 z-10 bg-gray-900/95 backdrop-blur border-b border-gray-800 px-6 py-4">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
