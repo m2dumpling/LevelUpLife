@@ -14,13 +14,14 @@ export async function GET(request: Request) {
       const rewards = db.select({
         date: schema.rewardLedger.completedDate,
         amount: schema.rewardLedger.goldEarned,
+        reversed: schema.rewardLedger.reversedAt,
         title: schema.rewardLedger.taskTitle,
         type: schema.rewardLedger.mode,
       }).from(schema.rewardLedger)
         .where(eq(schema.rewardLedger.userId, userId))
         .orderBy(desc(schema.rewardLedger.createdAt))
         .limit(20).all()
-        .map(r => ({ ...r, source: "任务奖励" }));
+        .map(r => ({ date: r.date, amount: r.reversed ? -r.amount : r.amount, title: r.title + (r.reversed ? " (已撤回)" : ""), source: r.reversed ? "任务撤回" : "任务奖励", type: r.type }));
 
       const lottery = db.select({ date: schema.lotteryLog.date, prize: schema.lotteryLog.prize })
         .from(schema.lotteryLog).where(eq(schema.lotteryLog.userId, userId))

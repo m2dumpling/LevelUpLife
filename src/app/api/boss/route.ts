@@ -30,15 +30,24 @@ function getMonday(): string {
   return d.toISOString().split("T")[0];
 }
 
+function getToday(): string { return new Date().toISOString().split("T")[0]; }
+
+function countActiveUsers(): number {
+  const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString().split("T")[0];
+  return db.select().from(schema.user).all().filter(u => (u.lastLoginDate || "") >= threeDaysAgo).length;
+}
+
 function spawnBoss() {
-  const monday = getMonday();
-  const existing = db.select().from(schema.boss).where(eq(schema.boss.weekStart, monday)).get();
+  const today = getToday();
+  const existing = db.select().from(schema.boss).where(eq(schema.boss.weekStart, today)).get();
   if (existing) return existing;
 
   const bossDef = BOSS_NAMES[Math.floor(Math.random() * BOSS_NAMES.length)];
-  const maxHp = 100 + Math.floor(Math.random() * 200);
+  const activeUsers = Math.max(1, countActiveUsers());
+  // HP = activeUsers * 20 + random(50) — so 10 users ≈ 250HP, 20 users ≈ 450HP
+  const maxHp = activeUsers * 20 + Math.floor(Math.random() * 50);
   const boss = db.insert(schema.boss).values({
-    name: bossDef.name, emoji: bossDef.emoji, hp: maxHp, maxHp, weekStart: monday, defeated: false,
+    name: bossDef.name, emoji: bossDef.emoji, hp: maxHp, maxHp, weekStart: today, defeated: false,
   }).returning().get();
   return boss;
 }
@@ -70,20 +79,38 @@ export async function GET(request: Request) {
       totalUsers,
       totalDamage,
       hpPercent: Math.max(0, Math.round((boss.hp / boss.maxHp) * 100)),
-      weekEnd: new Date(new Date(boss.weekStart).getTime() + 7 * 86400000).toISOString().split("T")[0],
+      dayEnd: getToday(),
+      activeUsers: countActiveUsers(),
+      reward: boss.defeated ? null : { gold: 50 + Math.floor(Math.random() * 100), description: "击败Boss所有参战者瓜分金币奖励" },
+      damageTable: { trivial: 1, easy: 2, medium: 4, hard: 8, heroic: 16 },
     });
   } catch (e) {
     return NextResponse.json({ error: "获取BOSS信息失败" }, { status: 500 });
   }
 }
 
-/** 内部调用：记录打卡伤害 */
-export async function recordBossDamage(userId: number, difficulty: string): Promise<void> {
+/** 内部调用：记录打卡伤害。同一用户+同一任务+同一天只造成一次伤害 */
+export async function recordBossDamage(userId: number, difficulty: string, taskId?: number): Promise<void> {
   const boss = spawnBoss();
   if (boss.defeated) return;
 
   const dmg = DAMAGE_PER_DIFFICULTY[difficulty] || 1;
-  db.insert(schema.bossContribution).values({ bossId: boss.id, userId, damage: dmg }).run();
+  const today = new Date().toISOString().split("T")[0];
+
+  // 防刷：同一用户+同一任务+同一天只造成一次伤害
+  if (taskId) {
+    const existing = db.select().from(schema.bossContribution).where(
+      and(
+        eq(schema.bossContribution.bossId, boss.id),
+        eq(schema.bossContribution.userId, userId),
+        eq(schema.bossContribution.taskId, taskId),
+        eq(schema.bossContribution.damageDate, today),
+      )
+    ).get();
+    if (existing) return;
+  }
+
+  db.insert(schema.bossContribution).values({ bossId: boss.id, userId, taskId: taskId || 0, damage: dmg, damageDate: today }).run();
 
   const newHp = Math.max(0, boss.hp - dmg);
   db.update(schema.boss).set({ hp: newHp, defeated: newHp <= 0 }).where(eq(schema.boss.id, boss.id)).run();

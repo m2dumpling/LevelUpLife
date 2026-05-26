@@ -111,7 +111,7 @@ export async function PATCH(
       }
 
       db.insert(schema.habitLog).values({ userId, taskId, completedAt: today }).run();
-      recordBossDamage(userId, task.difficulty);
+      recordBossDamage(userId, task.difficulty, taskId);
 
       const newStreak = recalculateHabitStreak(taskId, userId);
       const newBestStreak = Math.max(newStreak, task.bestStreak);
@@ -221,7 +221,7 @@ export async function PATCH(
         .set({ completed: true, completedAt: nowISO, status: "completed" })
         .where(and(eq(schema.task.id, taskId), eq(schema.task.userId, userId)))
         .run();
-      recordBossDamage(userId, task.difficulty);
+      recordBossDamage(userId, task.difficulty, taskId);
 
       const completedTask = {
         ...task,

@@ -153,6 +153,8 @@ export const bossContribution = sqliteTable("boss_contribution", {
   id: integer("id").primaryKey(),
   bossId: integer("boss_id").notNull(),
   userId: integer("user_id").notNull(),
+  taskId: integer("task_id").notNull().default(0),
+  damageDate: text("damage_date"),
   damage: integer("damage").notNull().default(0),
 });
 
