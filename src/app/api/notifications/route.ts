@@ -36,9 +36,10 @@ export async function GET(request: Request) {
     if (afterTimestamp > 0) {
       // Count messages from each friend sent after the timestamp
       for (const f of friends) {
+        const afterDate = new Date(afterTimestamp).toISOString();
         const count = db.select().from(schema.friendChat).where(and(
           eq(schema.friendChat.userId, f.friendId), eq(schema.friendChat.friendId, userId),
-          gt(schema.friendChat.id, afterTimestamp)
+          gt(schema.friendChat.createdAt, afterDate)
         )).all().length;
         if (count > 0) friendUnread[f.friendId] = count;
       }
