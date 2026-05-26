@@ -49,13 +49,17 @@ export function BossWidget() {
         {celebrate && (
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 pointer-events-none"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
           >
-            <div className="bg-card border border-amber-500/30 rounded-2xl p-8 text-center space-y-3 shadow-2xl">
+            <div className="bg-card border border-amber-500/30 rounded-2xl p-8 text-center space-y-3 shadow-2xl max-w-sm w-[calc(100%-2rem)]">
               <div className="text-5xl">{boss.emoji}</div>
               <h2 className="text-2xl font-black text-amber-400">BOSS 被击败了！</h2>
               <p className="text-sm text-muted-foreground">{boss.name} 已被 {boss.totalUsers} 名勇者联手击败</p>
-              <p className="text-amber-400 font-bold">🏆 每位参战者获得 {boss.reward?.gold || "?"} G 奖励！</p>
+              <p className="text-amber-400 font-bold text-lg">🏆 每位参战者获得 {boss.reward?.gold || 80} G 奖励！</p>
+              <button onClick={() => setCelebrate(false)}
+                className="mt-3 px-6 py-2 bg-amber-500/20 text-amber-400 rounded-lg font-bold hover:bg-amber-500/30 transition-colors">
+                知道了
+              </button>
             </div>
           </motion.div>
         )}

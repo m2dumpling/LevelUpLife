@@ -81,7 +81,7 @@ export async function GET(request: Request) {
       hpPercent: Math.max(0, Math.round((boss.hp / boss.maxHp) * 100)),
       dayEnd: getToday(),
       activeUsers: countActiveUsers(),
-      reward: boss.defeated ? null : { gold: 50 + Math.floor(Math.random() * 100), description: "击败Boss所有参战者瓜分金币奖励" },
+      reward: { gold: 50 + Math.floor(Math.random() * 100), description: "击败BOSS所有参战者瓜分金币奖励" },
       damageTable: { trivial: 1, easy: 2, medium: 4, hard: 8, heroic: 16 },
     });
   } catch (e) {
