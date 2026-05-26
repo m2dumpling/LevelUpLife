@@ -13,8 +13,23 @@ interface ChatMsg {
   id: number; userId: number; friendId: number; message: string; createdAt: string;
 }
 
-export function FriendButton() {
-  const [open, setOpen] = useState(false);
+interface FriendButtonProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function FriendButton({ open: controlledOpen, onOpenChange }: FriendButtonProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(v);
+    } else {
+      setInternalOpen(v);
+    }
+  };
+
   const [friends, setFriends] = useState<Friend[]>([]);
   const [activeChat, setActiveChat] = useState<number | null>(null);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -100,19 +115,28 @@ export function FriendButton() {
 
   const activeFriend = friends.find(f => f.id === activeChat);
 
+  // Auto-load friends when controlled open
+  useEffect(() => {
+    if (isControlled && open) {
+      loadFriends();
+    }
+  }, [isControlled, open]);
+
   return (
     <>
-      <motion.button
-        onClick={() => { setOpen(true); loadFriends(); }}
-        whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-        className="inline-flex shrink-0 items-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-sm font-bold text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-      >
-        <Users className="w-5 h-5" />
-        <span>好友</span>
-        {friends.length > 0 && (
-          <span className="text-[10px] bg-emerald-500/20 rounded-full px-1.5 py-0.5 leading-none">{friends.length}</span>
-        )}
-      </motion.button>
+      {!isControlled && (
+        <motion.button
+          onClick={() => { setInternalOpen(true); loadFriends(); }}
+          whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+          className="inline-flex shrink-0 items-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-sm font-bold text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+        >
+          <Users className="w-5 h-5" />
+          <span>好友</span>
+          {friends.length > 0 && (
+            <span className="text-[10px] bg-emerald-500/20 rounded-full px-1.5 py-0.5 leading-none">{friends.length}</span>
+          )}
+        </motion.button>
+      )}
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => { setOpen(false); closeChat(); }}>

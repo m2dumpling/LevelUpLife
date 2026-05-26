@@ -15,10 +15,18 @@ interface BackpackDialogProps {
   inventory: Record<string, { quantity: number; equipped: boolean }>;
   onCraft: (medalKey: string) => Promise<void>;
   onEquip: (itemKey: string, equipped: boolean) => Promise<void>;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function BackpackDialog({ inventory, onCraft, onEquip }: BackpackDialogProps) {
-  const [open, setOpen] = useState(false);
+export function BackpackDialog({ inventory, onCraft, onEquip, open: controlledOpen, onOpenChange: controlledOnChange }: BackpackDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const handleOpenChange = isControlled
+    ? (v: boolean) => { if (!v) setError(""); controlledOnChange?.(v); }
+    : (v: boolean) => { setInternalOpen(v); setError(""); };
+
   const [crafting, setCrafting] = useState<string | null>(null);
   const [error, setError] = useState("");
 
@@ -72,18 +80,20 @@ export function BackpackDialog({ inventory, onCraft, onEquip }: BackpackDialogPr
   const sortedMedals = sortByRarity(MEDAL_RECIPES.filter((m) => (inventory[m.medalKey]?.quantity ?? 0) > 0));
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); setError(""); }}>
-      <DialogTrigger
-        render={
-          <button
-            type="button"
-            className="inline-flex shrink-0 items-center justify-center gap-1 rounded-md border border-border bg-transparent px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-card hover:border-primary/40 transition-colors"
-          >
-            <Package className="w-3.5 h-3.5" />
-            背包
-          </button>
-        }
-      />
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      {isControlled ? null : (
+        <DialogTrigger
+          render={
+            <button
+              type="button"
+              className="inline-flex shrink-0 items-center justify-center gap-1 rounded-md border border-border bg-transparent px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-card hover:border-primary/40 transition-colors"
+            >
+              <Package className="w-3.5 h-3.5" />
+              背包
+            </button>
+          }
+        />
+      )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

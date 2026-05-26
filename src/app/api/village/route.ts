@@ -74,12 +74,11 @@ export async function POST(request: Request) {
 
     // 应用建筑效果
     if (building === "houses") {
-      // 房屋: +1 maxHP
+      // 房屋: +1 maxHP，HP 也跟着 +1 但不能超过新上限
+      const newMaxHp = user.maxHp + 1;
+      const newHp = Math.min(user.hp + 1, newMaxHp);
       db.update(schema.user)
-        .set({
-          maxHp: user.maxHp + 1,
-          hp: Math.min(user.hp + 1, user.maxHp + 1),
-        })
+        .set({ maxHp: newMaxHp, hp: newHp })
         .where(eq(schema.user.id, userId))
         .run();
     }

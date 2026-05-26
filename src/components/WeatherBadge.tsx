@@ -32,9 +32,24 @@ function formatBonus(bonus: number): string {
   return pct > 0 ? `+${pct}%` : "";
 }
 
-export function WeatherBadge() {
+interface WeatherBadgeProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function WeatherBadge({ open: controlledOpen, onOpenChange: controlledOnChange }: WeatherBadgeProps = {}) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : dialogOpen;
+  const setOpen = (v: boolean) => {
+    if (isControlled) {
+      controlledOnChange?.(v);
+    } else {
+      setDialogOpen(v);
+    }
+  };
+
   const [saving, setSaving] = useState(false);
 
   const fetchWeather = useCallback(async () => {
@@ -76,17 +91,19 @@ export function WeatherBadge() {
   if (!weather?.city || !weather?.weather) {
     return (
       <>
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setDialogOpen(true)}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-          title="设置城市获取天气加成"
-        >
-          🌍 设置城市
-        </motion.button>
+        {!isControlled && (
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setDialogOpen(true)}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            title="设置城市获取天气加成"
+          >
+            🌍 设置城市
+          </motion.button>
+        )}
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>选择你的城市</DialogTitle>
@@ -119,21 +136,23 @@ export function WeatherBadge() {
 
   return (
     <>
-      <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => setDialogOpen(true)}
-        className="flex items-center gap-1 text-xs text-foreground hover:text-primary transition-colors cursor-pointer bg-muted/30 px-2 py-0.5 rounded-full"
-        title={`室内: ${indoorBonus || "无"} · 室外: ${outdoorBonus || "无"}`}
-      >
-        <span>{w.emoji}</span>
-        <span>{weather.city}</span>
-        {(indoorBonus || outdoorBonus) && (
-          <span className="text-emerald-400">↑</span>
-        )}
-      </motion.button>
+      {!isControlled && (
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setDialogOpen(true)}
+          className="flex items-center gap-1 text-xs text-foreground hover:text-primary transition-colors cursor-pointer bg-muted/30 px-2 py-0.5 rounded-full"
+          title={`室内: ${indoorBonus || "无"} · 室外: ${outdoorBonus || "无"}`}
+        >
+          <span>{w.emoji}</span>
+          <span>{weather.city}</span>
+          {(indoorBonus || outdoorBonus) && (
+            <span className="text-emerald-400">↑</span>
+          )}
+        </motion.button>
+      )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>

@@ -70,8 +70,24 @@ const RPS_NAMES: Record<string, string> = { rock: "石头", paper: "布", scisso
 
 // ── 组件 ──
 
-export function PvPArena() {
-  const [open, setOpen] = useState(false);
+interface PvPArenaProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function PvPArena({ open: controlledOpen, onOpenChange: controlledOnChange }: PvPArenaProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+
+  const handleOpenChange = (v: boolean) => {
+    if (isControlled) {
+      controlledOnChange?.(v);
+    } else {
+      setInternalOpen(v);
+    }
+  };
+
   const [waiting, setWaiting] = useState<WaitingMatch[]>([]);
   const [recent, setRecent] = useState<RecentMatch[]>([]);
   const [loading, setLoading] = useState(false);
@@ -438,7 +454,7 @@ export function PvPArena() {
           });
           window.dispatchEvent(new Event("task-completed"));
         }
-        setOpen(v);
+        handleOpenChange(v);
         if (!v) {
           setActiveMatch(null);
           setMatchResult(null);
@@ -447,18 +463,20 @@ export function PvPArena() {
           setMathAnswer("");
         }
       }}>
-        <DialogTrigger
-          render={
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg shadow-orange-600/20 transition-all"
-            >
-              <Swords className="w-4 h-4" />
-              PvP 竞技场
-            </motion.button>
-          }
-        />
+        {isControlled ? null : (
+          <DialogTrigger
+            render={
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg shadow-orange-600/20 transition-all"
+              >
+                <Swords className="w-4 h-4" />
+                PvP 竞技场
+              </motion.button>
+            }
+          />
+        )}
 
         <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto bg-gradient-to-b from-gray-900 to-gray-950 border-gray-800 text-gray-100 p-0 gap-0">
           <div className="sticky top-0 z-10 bg-gray-900/95 backdrop-blur border-b border-gray-800 px-6 py-4">

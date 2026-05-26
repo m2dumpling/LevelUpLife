@@ -16,10 +16,18 @@ interface ShopDialogProps {
   gold: number;
   inventory: Record<string, { quantity: number; equipped: boolean }>;
   onBuy: (itemKey: string) => Promise<void>;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function ShopDialog({ gold, inventory, onBuy }: ShopDialogProps) {
-  const [open, setOpen] = useState(false);
+export function ShopDialog({ gold, inventory, onBuy, open: controlledOpen, onOpenChange: controlledOnChange }: ShopDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const handleOpenChange = isControlled
+    ? (v: boolean) => { if (!v) setError(""); controlledOnChange?.(v); }
+    : (v: boolean) => { setInternalOpen(v); setError(""); };
+
   const [buying, setBuying] = useState<string | null>(null);
   const [error, setError] = useState("");
 
@@ -47,18 +55,20 @@ export function ShopDialog({ gold, inventory, onBuy }: ShopDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); setError(""); }}>
-      <DialogTrigger
-        render={
-          <button
-            type="button"
-            className="inline-flex shrink-0 items-center justify-center gap-1 rounded-md border border-border bg-transparent px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-card hover:border-primary/40 transition-colors"
-          >
-            <Store className="w-3.5 h-3.5" />
-            商店
-          </button>
-        }
-      />
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      {isControlled ? null : (
+        <DialogTrigger
+          render={
+            <button
+              type="button"
+              className="inline-flex shrink-0 items-center justify-center gap-1 rounded-md border border-border bg-transparent px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-card hover:border-primary/40 transition-colors"
+            >
+              <Store className="w-3.5 h-3.5" />
+              商店
+            </button>
+          }
+        />
+      )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

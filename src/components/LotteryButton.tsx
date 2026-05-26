@@ -1,11 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Gift, X } from "lucide-react";
 
-export function LotteryButton() {
-  const [open, setOpen] = useState(false);
+interface LotteryButtonProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function LotteryButton({ open: controlledOpen, onOpenChange }: LotteryButtonProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(v);
+    } else {
+      setInternalOpen(v);
+    }
+  };
+
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ canDraw: boolean; drawn: boolean; completedToday: number; required: number } | null>(null);
@@ -13,8 +28,15 @@ export function LotteryButton() {
   const checkStatus = async () => {
     const res = await fetch("/api/lottery");
     if (res.ok) setStatus(await res.json());
-    setOpen(true);
+    if (!isControlled) setInternalOpen(true);
   };
+
+  // Auto-fetch status when controlled open
+  useEffect(() => {
+    if (isControlled && open) {
+      checkStatus();
+    }
+  }, [isControlled, open]);
 
   const draw = async () => {
     setLoading(true);
@@ -34,13 +56,15 @@ export function LotteryButton() {
 
   return (
     <>
-      <button
-        onClick={checkStatus}
-        className="inline-flex shrink-0 items-center justify-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-xs font-medium text-amber-400 hover:bg-amber-500/20 transition-colors"
-      >
-        <Gift className="w-3.5 h-3.5" />
-        每日抽奖
-      </button>
+      {!isControlled && (
+        <button
+          onClick={checkStatus}
+          className="inline-flex shrink-0 items-center justify-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-xs font-medium text-amber-400 hover:bg-amber-500/20 transition-colors"
+        >
+          <Gift className="w-3.5 h-3.5" />
+          每日抽奖
+        </button>
+      )}
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setOpen(false)}>

@@ -2,7 +2,9 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Cloud, Store, Package, Gift, Swords, Shield, Users } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { Sidebar, type SidebarItem } from "@/components/Sidebar";
 import { BossWidget } from "@/components/BossWidget";
 import { StatDashboard } from "@/components/StatDashboard";
 import { TaskList } from "@/components/TaskList";
@@ -52,6 +54,23 @@ function checkAchievements(
   }
 }
 
+/** Sidebar panel definitions */
+const SIDEBAR_ITEMS: SidebarItem[] = [
+  { id: "weather", icon: <Cloud className="w-5 h-5" />, label: "天气" },
+  { id: "shop", icon: <Store className="w-5 h-5" />, label: "商店" },
+  { id: "backpack", icon: <Package className="w-5 h-5" />, label: "背包" },
+  { id: "lottery", icon: <Gift className="w-5 h-5" />, label: "每日抽奖" },
+  { id: "pvp", icon: <Swords className="w-5 h-5" />, label: "PvP 竞技场" },
+  { id: "guild", icon: <Shield className="w-5 h-5" />, label: "公会" },
+  { id: "friends", icon: <Users className="w-5 h-5" />, label: "好友" },
+];
+
+/** Simple weather display data */
+interface WeatherDisplay {
+  city: string;
+  emoji: string;
+}
+
 export default function HomePage() {
   const { stats, loading: statsLoading, refreshStats } = useStats();
   const {
@@ -66,6 +85,39 @@ export default function HomePage() {
     editTask,
     uncompleteTask,
   } = useTasks();
+
+  // ── Panel state (sidebar controlled) ──
+  const [activePanel, setActivePanel] = useState<string | null>(null);
+
+  // ── Weather display badge data ──
+  const [weatherDisplay, setWeatherDisplay] = useState<WeatherDisplay | null>(null);
+
+  const fetchWeatherDisplay = useCallback(async () => {
+    try {
+      const res = await fetch("/api/weather");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.city && data.weather) {
+          setWeatherDisplay({ city: data.city, emoji: data.weather.emoji });
+        } else {
+          setWeatherDisplay(null);
+        }
+      }
+    } catch {
+      // 静默
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchWeatherDisplay();
+  }, [fetchWeatherDisplay]);
+
+  // Refresh weather display when changed from WeatherBadge
+  useEffect(() => {
+    const handler = () => fetchWeatherDisplay();
+    window.addEventListener("weather-changed", handler);
+    return () => window.removeEventListener("weather-changed", handler);
+  }, [fetchWeatherDisplay]);
 
   const [levelUpData, setLevelUpData] = useState<{
     open: boolean;
@@ -135,6 +187,9 @@ export default function HomePage() {
     return () => window.removeEventListener("inventory-changed", handler);
   }, [refreshInventory]);
 
+  const handlePanelClick = (id: string) => {
+    setActivePanel((prev) => (prev === id ? null : id));
+  };
 
   const handleComplete = useCallback(
     async (taskId: number) => {
@@ -206,6 +261,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* ── Global overlays ── */}
       <FloatingNumberContainer />
       <AchievementPopup />
       <LevelUpModal
@@ -223,105 +279,148 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-card border border-border rounded-lg px-4 py-2 shadow-lg text-sm text-foreground max-w-sm text-center"
+            className="fixed bottom-20 md:bottom-4 left-1/2 -translate-x-1/2 z-50 bg-card border border-border rounded-lg px-4 py-2 shadow-lg text-sm text-foreground max-w-sm text-center"
           >
             {npcMessage}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <Navbar stats={stats} />
+      {/* ── Discord-Style Sidebar ── */}
+      <Sidebar
+        items={SIDEBAR_ITEMS}
+        activePanel={activePanel}
+        onPanelClick={handlePanelClick}
+      />
 
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* 世界 BOSS */}
-        <BossWidget />
+      {/* ── Main content area (offset for sidebar) ── */}
+      <div className="ml-0 md:ml-[60px] pb-[72px] md:pb-0">
+        <Navbar stats={stats} />
 
-        {/* 天气 + 职业 + 快捷入口 */}
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="flex items-center gap-2 flex-wrap"
-        >
-          <WeatherBadge />
-          {classData && (
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="flex items-center gap-1 text-xs bg-muted/30 px-2 py-0.5 rounded-full cursor-default"
-              title={`职业: ${classData.name}`}
-            >
-              <span>{classData.emoji}</span>
-              <span className="text-foreground">{classData.name}</span>
-            </motion.span>
-          )}
-          <MonthlyView habits={habits} plans={plans} />
-          <ShopDialog
-            gold={stats?.gold ?? 0}
-            inventory={inventory}
-            onBuy={refreshInventory}
-          />
-          <BackpackDialog
-            inventory={inventory}
-            onCraft={refreshInventory}
-            onEquip={refreshInventory}
-          />
-          <LotteryButton />
-          <PvPArena />
-          <GuildButton />
-          <FriendButton />
-        </motion.div>
+        <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+          {/* Inline badges: weather + class + calendar */}
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="flex items-center gap-2 flex-wrap"
+          >
+            {weatherDisplay && (
+              <span
+                className="flex items-center gap-1 text-xs bg-muted/30 px-2 py-0.5 rounded-full cursor-default"
+                title={`当前天气: ${weatherDisplay.city}`}
+              >
+                <span>{weatherDisplay.emoji}</span>
+                <span className="text-muted-foreground">{weatherDisplay.city}</span>
+              </span>
+            )}
+            {classData && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="flex items-center gap-1 text-xs bg-muted/30 px-2 py-0.5 rounded-full cursor-default"
+                title={`职业: ${classData.name}`}
+              >
+                <span>{classData.emoji}</span>
+                <span className="text-foreground">{classData.name}</span>
+              </motion.span>
+            )}
+            <MonthlyView habits={habits} plans={plans} />
+          </motion.div>
 
-        <motion.section
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <StatDashboard stats={stats} loading={statsLoading} />
-        </motion.section>
+          {/* 世界 BOSS */}
+          <BossWidget />
 
-        <motion.section
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-        >
-          <TaskList
-            habits={habits}
-            plans={plans}
-            pending={pending}
-            completed={completed}
-            loading={tasksLoading}
-            onComplete={handleComplete}
-            onDelete={handleDelete}
-            onUncomplete={handleUncomplete}
-            onEdit={handleEdit}
-            onAdd={handleAdd}
-          />
-        </motion.section>
+          <motion.section
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <StatDashboard stats={stats} loading={statsLoading} />
+          </motion.section>
 
-        {/* 村庄 */}
-        <motion.section
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.25 }}
-        >
-          <VillageWidget />
-        </motion.section>
+          <motion.section
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            <TaskList
+              habits={habits}
+              plans={plans}
+              pending={pending}
+              completed={completed}
+              loading={tasksLoading}
+              onComplete={handleComplete}
+              onDelete={handleDelete}
+              onUncomplete={handleUncomplete}
+              onEdit={handleEdit}
+              onAdd={handleAdd}
+            />
+          </motion.section>
 
-        <motion.div
-          className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-        >
-          <div className="bg-card rounded-xl p-4 border border-border">
-            <Heatmap />
-          </div>
-          <div className="bg-card rounded-xl p-4 border border-border">
-            <Timeline />
-          </div>
-        </motion.div>
-      </main>
+          {/* 村庄 */}
+          <motion.section
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.25 }}
+          >
+            <VillageWidget />
+          </motion.section>
+
+          <motion.div
+            className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+          >
+            <div className="bg-card rounded-xl p-4 border border-border">
+              <Heatmap />
+            </div>
+            <div className="bg-card rounded-xl p-4 border border-border">
+              <Timeline />
+            </div>
+          </motion.div>
+        </main>
+      </div>
+
+      {/* ── Controlled dialogs (portals) ── */}
+      <WeatherBadge
+        open={activePanel === "weather"}
+        onOpenChange={(v) => {
+          if (!v) setActivePanel(null);
+          if (v) window.dispatchEvent(new Event("weather-changed"));
+        }}
+      />
+      <ShopDialog
+        open={activePanel === "shop"}
+        onOpenChange={(v) => { if (!v) setActivePanel(null); }}
+        gold={stats?.gold ?? 0}
+        inventory={inventory}
+        onBuy={refreshInventory}
+      />
+      <BackpackDialog
+        open={activePanel === "backpack"}
+        onOpenChange={(v) => { if (!v) setActivePanel(null); }}
+        inventory={inventory}
+        onCraft={refreshInventory}
+        onEquip={refreshInventory}
+      />
+      <LotteryButton
+        open={activePanel === "lottery"}
+        onOpenChange={(v) => { if (!v) setActivePanel(null); }}
+      />
+      <PvPArena
+        open={activePanel === "pvp"}
+        onOpenChange={(v) => { if (!v) setActivePanel(null); }}
+      />
+      <GuildButton
+        open={activePanel === "guild"}
+        onOpenChange={(v) => { if (!v) setActivePanel(null); }}
+      />
+      <FriendButton
+        open={activePanel === "friends"}
+        onOpenChange={(v) => { if (!v) setActivePanel(null); }}
+      />
     </div>
   );
 }
