@@ -68,11 +68,11 @@ export function Navbar({ stats }: NavbarProps) {
             </div>
             <div className="flex items-center gap-1">
               <span className="text-[10px] text-muted-foreground uppercase">XP</span>
-              <span className="text-sm font-bold text-emerald-400">{stats.xp}</span>
+              <span className="text-sm font-bold text-emerald-400">{stats.role === "admin" ? "∞" : stats.xp}</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="text-[10px] text-muted-foreground uppercase">G</span>
-              <span className="text-sm font-bold text-amber-400">{stats.gold}</span>
+              <span className="text-sm font-bold text-amber-400">{stats.role === "admin" ? "∞" : stats.gold}</span>
             </div>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
               <LogOut className="w-4 h-4" />

@@ -40,6 +40,7 @@ export interface Task {
 export interface UserStats {
   id: number;
   name: string;
+  role?: string;
   level: number;
   xp: number;
   xpToNext: number;

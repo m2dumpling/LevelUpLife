@@ -75,6 +75,12 @@ export function getUserId(request: Request): number {
   return Number(header);
 }
 
+/** 检查用户是否为管理员 */
+export function isAdmin(request: Request): boolean {
+  const role = request.headers.get("x-user-role") || "user";
+  return role === "admin";
+}
+
 /** Cookie 名称常量 */
 export { COOKIE_NAME };
 

@@ -27,15 +27,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "用户不存在" }, { status: 404 });
     }
 
-    if (user.gold < ore.cost) {
-      return NextResponse.json({ error: "金币不足" }, { status: 400 });
+    // Admin 无限金币
+    if (user.role !== "admin") {
+      if (user.gold < ore.cost) {
+        return NextResponse.json({ error: "金币不足" }, { status: 400 });
+      }
+      db.update(schema.user)
+        .set({ gold: user.gold - ore.cost, updatedAt: new Date().toISOString() })
+        .where(eq(schema.user.id, userId))
+        .run();
     }
-
-    // 扣金币
-    db.update(schema.user)
-      .set({ gold: user.gold - ore.cost, updatedAt: new Date().toISOString() })
-      .where(eq(schema.user.id, userId))
-      .run();
 
     // 加库存（upsert）
     const existing = db
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      gold: user.gold - ore.cost,
+      gold: user.role === "admin" ? user.gold : user.gold - ore.cost,
       item: { itemKey: updated!.itemKey, quantity: updated!.quantity, equipped: updated!.equipped },
     });
   } catch (e) {

@@ -6,7 +6,7 @@
  */
 
 import { db, schema } from "@/lib/db";
-import { eq, and, lt } from "drizzle-orm";
+import { eq, and, lt, ne } from "drizzle-orm";
 import { getTodayLocal, getYesterdayLocal, getDaysAgoLocal, getDayOfWeek, getDayOfMonth } from "@/lib/date-utils";
 import { addStoneOnStreak, getVillageEffects } from "@/lib/village";
 import { assignClass } from "@/lib/class-analyzer";
@@ -198,7 +198,7 @@ function runCleanupIfNeeded(_userId: number) {
   cleanupRanToday = true;
 
   const cutoff = getDaysAgoLocal(INACTIVE_DAYS);
-  const inactiveUsers = db.select({ id: schema.user.id }).from(schema.user).where(lt(schema.user.lastLoginDate, cutoff)).all();
+  const inactiveUsers = db.select({ id: schema.user.id }).from(schema.user).where(and(lt(schema.user.lastLoginDate, cutoff), ne(schema.user.role, "admin"))).all();
 
   for (const u of inactiveUsers) {
     const uid = u.id;

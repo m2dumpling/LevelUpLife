@@ -423,8 +423,13 @@ async function handleCreate(
     );
   }
 
-  // Deduct bet
-  deductGold(userId, bet);
+  // Admin — skip gold check and deduction
+  const isAdminPvp = (db.select({ role: schema.user.role }).from(schema.user).where(eq(schema.user.id, userId)).get()?.role) === "admin";
+  if (!isAdminPvp && gold < bet) {
+    return NextResponse.json({ error: `金币不足，需要 ${bet}G，你只有 ${gold}G` }, { status: 400 });
+  }
+  // Deduct bet (admin no deduction)
+  if (!isAdminPvp) deductGold(userId, bet);
 
   const now = new Date().toISOString();
 
@@ -500,19 +505,15 @@ async function handleJoin(
     );
   }
 
-  // Check gold
+  // Admin — skip gold check
+  const isAdminJoin = (db.select({ role: schema.user.role }).from(schema.user).where(eq(schema.user.id, userId)).get()?.role) === "admin";
   const gold = getUserGold(userId);
-  if (gold < match.bet) {
-    return NextResponse.json(
-      {
-        error: `金币不足，需要 ${match.bet}G，你只有 ${gold}G`,
-      },
-      { status: 400 }
-    );
+  if (gold < match.bet && !isAdminJoin) {
+    return NextResponse.json({ error: `金币不足，需要 ${match.bet}G，你只有 ${gold}G` }, { status: 400 });
   }
 
-  // Deduct bet
-  deductGold(userId, match.bet);
+  // Deduct bet (admin no deduction)
+  if (!isAdminJoin) deductGold(userId, match.bet);
 
   const type = match.type as string;
 
