@@ -140,6 +140,19 @@ export function PvPArena() {
         setActiveMatch((prev) => prev ? { ...prev, status: "completed" } : null);
         return;
       }
+      // 查进行中的对决（对手加入后状态变为 playing）
+      if (data.active && data.active.id === activeMatch.id) {
+        setActiveMatch((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            player2Id: data.active.player2Id ?? prev.player2Id,
+            result: data.active.result ?? prev.result,
+            status: data.active.status ?? prev.status,
+          };
+        });
+        return;
+      }
       // 查等待列表中有没有当前对决的更新
       const waitingMatch = (data.waiting || []).find((m: WaitingMatch & { player2Id?: number; result?: string }) => m.id === activeMatch.id);
       if (!waitingMatch) return;

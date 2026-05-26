@@ -143,9 +143,31 @@ export async function GET(request: Request) {
       createdAt: m.createdAt,
     }));
 
+    // 用户当前进行中的对决
+    const activeMatch = db
+      .select()
+      .from(schema.pvpMatch)
+      .where(eq(schema.pvpMatch.status, "playing"))
+      .all()
+      .find((m) => m.player1Id === userId || m.player2Id === userId);
+
+    const activeData = activeMatch
+      ? {
+          id: activeMatch.id,
+          type: activeMatch.type,
+          bet: activeMatch.bet,
+          player1Id: activeMatch.player1Id,
+          player2Id: activeMatch.player2Id,
+          status: activeMatch.status,
+          result: activeMatch.result,
+          createdAt: activeMatch.createdAt,
+        }
+      : null;
+
     return NextResponse.json({
       waiting: waitingEnriched,
       recent: recentEnriched,
+      active: activeData,
     });
   } catch (error) {
     console.error("PvP GET error:", error);
