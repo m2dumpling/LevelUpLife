@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { createToken, getCookieOptions, verifyPassword } from "@/lib/auth";
+import { getTodayLocal } from "@/lib/date-utils";
 
 // 简单的内存 rate limiting Map（单进程有效，重启清空）
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
     const loginCountry = request.headers.get("cf-ipcountry") || null;
     db.update(schema.user)
       .set({
-        lastLoginDate: new Date().toISOString().split("T")[0],
+        lastLoginDate: getTodayLocal(),
         lastLoginIp: loginIp,
         lastLoginCountry: loginCountry,
       })

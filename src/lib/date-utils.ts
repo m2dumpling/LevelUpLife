@@ -42,6 +42,34 @@ export function getDaysFromTodayLocal(n: number): string {
   return formatBeijingDate(new Date(Date.now() + n * DAY_MS));
 }
 
+/** Format an ISO date string as HH:MM in Beijing time. */
+export function formatBeijingTime(iso: string): string {
+  const d = new Date(iso);
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: BEIJING_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(d);
+  const hh = parts.find((p) => p.type === "hour")?.value ?? "00";
+  const mm = parts.find((p) => p.type === "minute")?.value ?? "00";
+  return `${hh}:${mm}`;
+}
+
+/** Format a Date object as YYYY年M月D日 in Beijing time. */
+export function formatBeijingDateFull(d: Date): string {
+  const parts = new Intl.DateTimeFormat("zh-CN", {
+    timeZone: BEIJING_TIME_ZONE,
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(d);
+  const y = parts.find((p) => p.type === "year")?.value;
+  const m = parts.find((p) => p.type === "month")?.value;
+  const day = parts.find((p) => p.type === "day")?.value;
+  return `${y}年${m}月${day}日`;
+}
+
 /** Return day of week for a Beijing date string. 0=Sun, 6=Sat. */
 export function getDayOfWeek(dateStr: string): number {
   return new Date(`${dateStr}T12:00:00+08:00`).getUTCDay();

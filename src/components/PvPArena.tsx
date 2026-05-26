@@ -100,6 +100,7 @@ export function PvPArena() {
   const [diceRolling, setDiceRolling] = useState(false);
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const matchPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── 获取大厅数据 ──
   const fetchLobby = useCallback(async () => {
@@ -115,18 +116,64 @@ export function PvPArena() {
     }
   }, []);
 
+  // ── 轮询当前对决状态 ──
+  const fetchMatchStatus = useCallback(async () => {
+    if (!activeMatch) return;
+    try {
+      // 拉大厅数据中找当前对决
+      const res = await fetch("/api/pvp");
+      if (!res.ok) return;
+      const data = await res.json();
+      // 查最近完成的比赛有没有当前 matchId
+      const done = (data.recent || []).find((m: RecentMatch) => m.id === activeMatch.id);
+      if (done) {
+        // 比赛已结算
+        setMatchResult({
+          winner: done.winnerName,
+          winnerId: done.winnerId,
+          prize: done.bet * 2 - 2,
+          message: done.result ? JSON.stringify(done.result) : undefined,
+          ...(done.result as Record<string, unknown>),
+        });
+        setActiveMatch((prev) => prev ? { ...prev, status: "completed" } : null);
+        return;
+      }
+      // 查等待列表中有没有当前对决的更新
+      const waitingMatch = (data.waiting || []).find((m: WaitingMatch & { player2Id?: number; result?: string }) => m.id === activeMatch.id);
+      if (!waitingMatch) return;
+      // 更新对决状态
+      setActiveMatch((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          player2Id: (waitingMatch as { player2Id?: number }).player2Id ?? prev.player2Id,
+          result: (waitingMatch as { result?: string }).result ?? prev.result,
+        };
+      });
+    } catch {
+      // 静默
+    }
+  }, [activeMatch]);
+
   useEffect(() => {
     if (open) {
       fetchLobby();
       pollRef.current = setInterval(fetchLobby, 3000);
     }
     return () => {
-      if (pollRef.current) {
-        clearInterval(pollRef.current);
-        pollRef.current = null;
-      }
+      if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
     };
   }, [open, fetchLobby]);
+
+  // 活跃对决轮询
+  useEffect(() => {
+    if (activeMatch && !matchResult) {
+      matchPollRef.current = setInterval(fetchMatchStatus, 2000);
+    }
+    return () => {
+      if (matchPollRef.current) { clearInterval(matchPollRef.current); matchPollRef.current = null; }
+    };
+  }, [activeMatch, matchResult, fetchMatchStatus]);
 
   // 打开对话框时加载
   useEffect(() => {
@@ -344,8 +391,23 @@ export function PvPArena() {
                   </span>
                 </div>
 
-                {/* RPS 界面 */}
-                {activeMatch.type === "rps" && (
+                {/* ═══ 等待对手加入 ═══ */}
+                {!activeMatch.player2Id && (
+                  <div className="text-center py-6 space-y-3">
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                      className="text-4xl"
+                    >
+                      ⏳
+                    </motion.div>
+                    <p className="text-sm text-gray-300">等待对手加入...</p>
+                    <p className="text-xs text-gray-500">对决已创建，等待其他冒险者挑战</p>
+                  </div>
+                )}
+
+                {/* ═══ 对手已加入 — RPS ═══ */}
+                {activeMatch.player2Id && activeMatch.type === "rps" && (
                   <div className="space-y-3">
                     <p className="text-sm text-gray-300 text-center">
                       {rpsSubmitted
@@ -378,8 +440,8 @@ export function PvPArena() {
                   </div>
                 )}
 
-                {/* Dice 界面 */}
-                {activeMatch.type === "dice" && (
+                {/* ═══ 对手已加入 — Dice ═══ */}
+                {activeMatch.player2Id && activeMatch.type === "dice" && (
                   <div className="space-y-3 text-center">
                     <motion.div
                       animate={diceRolling ? { rotate: [0, 180, 360] } : {}}
@@ -396,8 +458,8 @@ export function PvPArena() {
                   </div>
                 )}
 
-                {/* Math 界面 */}
-                {activeMatch.type === "math" && mathProblem && (
+                {/* ═══ 对手已加入 — Math ═══ */}
+                {activeMatch.player2Id && activeMatch.type === "math" && mathProblem && (
                   <div className="space-y-3">
                     <p className="text-lg font-bold text-center text-white">
                       {mathProblem.a} {mathProblem.op === "+" ? "+" : "-"} {mathProblem.b} = ?

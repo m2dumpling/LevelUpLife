@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { formatBeijingTime } from "@/lib/date-utils";
 import { Input } from "@/components/ui/input";
 
 /* ── 类型 ── */
@@ -52,7 +53,7 @@ interface ChatMessage {
 
 /* ── 工具 ── */
 
-function formatTime(iso: string): string {
+function formatTime(iso: string): string { return formatBeijingTime(iso); }
   const d = new Date(iso);
   const hh = String(d.getHours()).padStart(2, "0");
   const mm = String(d.getMinutes()).padStart(2, "0");

@@ -95,6 +95,9 @@ export async function GET(request: Request) {
       type: m.type,
       bet: m.bet,
       creatorName: getUserName(m.player1Id),
+      player2Id: m.player2Id,
+      result: m.result,
+      status: m.status,
       createdAt: m.createdAt,
     }));
 

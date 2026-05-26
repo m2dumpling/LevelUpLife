@@ -6,6 +6,7 @@ import {
   Shield, Hash, Send, ArrowLeft, Users, Copy, Check, Crown, LogOut, Menu, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatBeijingTime } from "@/lib/date-utils";
 
 /* ── 类型 ── */
 interface GuildInfo {
@@ -16,8 +17,7 @@ interface GuildInfo {
 interface ChatMessage { id: number; userId: number; username: string; message: string; createdAt: string; }
 
 function formatStamp(iso: string): string {
-  const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return formatBeijingTime(iso);
 }
 
 const COLORS = ["#f87171","#fb923c","#fbbf24","#a3e635","#34d399","#22d3ee","#60a5fa","#a78bfa","#f472b6"];
