@@ -60,9 +60,9 @@ interface ActiveMatch {
 // ── 游戏类型图标/名称 ──
 
 const GAME_TYPES: Record<string, { name: string; icon: React.ReactNode; desc: string }> = {
-  rps: { name: "石头剪刀布", icon: <span className="text-2xl">✊✌️✋</span>, desc: "经典猜拳对决" },
-  dice: { name: "骰子对决", icon: <Dice1 className="w-5 h-5" />, desc: "D20 骰子比拼运气" },
-  math: { name: "速算对决", icon: <Calculator className="w-5 h-5" />, desc: "心算速度比拼" },
+  rps: { name: "石头剪刀布", icon: <span className="text-lg">✊</span>, desc: "经典猜拳对决" },
+  dice: { name: "骰子对决", icon: <Dice1 className="w-4 h-4" />, desc: "D20 骰子比拼运气" },
+  math: { name: "速算对决", icon: <Calculator className="w-4 h-4" />, desc: "心算速度比拼" },
 };
 
 const RPS_EMOJI: Record<string, string> = { rock: "✊", paper: "✋", scissors: "✌️" };
@@ -444,34 +444,34 @@ export function PvPArena() {
                 {activeMatch.player2Id && activeMatch.type === "dice" && (
                   <div className="space-y-3 text-center">
                     <motion.div
-                      animate={diceRolling ? { rotate: [0, 180, 360] } : {}}
-                      transition={{ duration: 0.6, repeat: diceRolling ? 2 : 0 }}
-                      className="text-5xl"
+                      key="rolling"
+                      initial={{ rotate: 0, scale: 1 }}
+                      animate={{ rotate: [0, -30, 20, -10, 0], scale: [1, 1.15, 1] }}
+                      transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                      className="text-5xl inline-block"
                     >
                       🎲
                     </motion.div>
-                    <p className="text-sm text-gray-300">
-                      {activeMatch.player2Id
-                        ? "骰子已投掷，等待结果..."
-                        : "等待对手加入，自动投掷骰子..."}
-                    </p>
+                    <p className="text-sm text-gray-300">骰子已投掷，对决中...</p>
                   </div>
                 )}
 
                 {/* ═══ 对手已加入 — Math ═══ */}
                 {activeMatch.player2Id && activeMatch.type === "math" && mathProblem && (
                   <div className="space-y-3">
-                    <p className="text-lg font-bold text-center text-white">
-                      {mathProblem.a} {mathProblem.op === "+" ? "+" : "-"} {mathProblem.b} = ?
-                    </p>
+                    <motion.p
+                      key={mathProblem.a + mathProblem.op + mathProblem.b}
+                      initial={{ scale: 1.2, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="text-lg font-bold text-center text-white"
+                    >
+                      ⏱ {mathProblem.a} {mathProblem.op === "+" ? "+" : "−"} {mathProblem.b} = ?
+                    </motion.p>
                     <div className="flex gap-2">
                       <input
                         type="number"
                         value={mathAnswer}
                         onChange={(e) => setMathAnswer(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleMathSubmit();
-                        }}
                         placeholder="输入答案..."
                         className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-orange-500"
                         autoFocus
@@ -490,11 +490,6 @@ export function PvPArena() {
                         )}
                       </motion.button>
                     </div>
-                    {!activeMatch.player2Id && (
-                      <p className="text-xs text-gray-500 text-center">
-                        等待对手加入...
-                      </p>
-                    )}
                   </div>
                 )}
 
@@ -537,24 +532,81 @@ export function PvPArena() {
 
                 {/* RPS 结果细节 */}
                 {matchResult.player1Move && matchResult.player2Move && (
-                  <div className="flex justify-center items-center gap-4 text-sm">
-                    <span className="text-gray-300">
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="flex justify-center items-center gap-4 text-sm"
+                  >
+                    <motion.span
+                      initial={{ rotate: -30, scale: 0 }}
+                      animate={{ rotate: 0, scale: 1 }}
+                      transition={{ delay: 0.3, type: "spring" }}
+                      className="text-gray-300"
+                    >
                       {RPS_EMOJI[matchResult.player1Move]} {RPS_NAMES[matchResult.player1Move]}
-                    </span>
-                    <span className="text-gray-500">VS</span>
-                    <span className="text-gray-300">
+                    </motion.span>
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.6, type: "spring", stiffness: 300 }}
+                      className="text-gray-500 font-bold text-lg"
+                    >
+                      VS
+                    </motion.span>
+                    <motion.span
+                      initial={{ rotate: 30, scale: 0 }}
+                      animate={{ rotate: 0, scale: 1 }}
+                      transition={{ delay: 0.9, type: "spring" }}
+                      className="text-gray-300"
+                    >
                       {RPS_EMOJI[matchResult.player2Move]} {RPS_NAMES[matchResult.player2Move]}
-                    </span>
-                  </div>
+                    </motion.span>
+                  </motion.div>
                 )}
 
                 {/* Dice 结果细节 */}
                 {matchResult.player1Roll !== undefined && matchResult.player2Roll !== undefined && (
-                  <div className="flex justify-center items-center gap-4 text-sm">
-                    <span className="text-gray-300">🎲 {matchResult.player1Roll}</span>
-                    <span className="text-gray-500">VS</span>
-                    <span className="text-gray-300">🎲 {matchResult.player2Roll}</span>
-                  </div>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="space-y-3"
+                  >
+                    <motion.div
+                      animate={{ rotate: [0, 360, 720] }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      className="text-3xl text-center"
+                    >
+                      🎲
+                    </motion.div>
+                    <div className="flex justify-center items-center gap-6 text-sm">
+                      <motion.span
+                        initial={{ x: -30, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                        className="text-gray-300"
+                      >
+                        🎲 {matchResult.player1Roll}
+                      </motion.span>
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.5, type: "spring", stiffness: 300 }}
+                        className="text-gray-500 font-bold text-lg"
+                      >
+                        VS
+                      </motion.span>
+                      <motion.span
+                        initial={{ x: 30, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                        className="text-gray-300"
+                      >
+                        🎲 {matchResult.player2Roll}
+                      </motion.span>
+                    </div>
+                  </motion.div>
                 )}
 
                 {/* Math 结果细节 */}
@@ -720,20 +772,20 @@ export function PvPArena() {
                         key={m.id}
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="flex items-center justify-between bg-gray-800/40 border border-gray-700/50 rounded-xl p-3 hover:border-gray-600/50 transition-colors"
+                        className="flex items-center justify-between bg-gray-800/40 border border-gray-700/50 rounded-xl p-2.5 md:p-3 hover:border-gray-600/50 transition-colors"
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-10 h-10 rounded-lg bg-gray-700/50 flex items-center justify-center shrink-0">
+                        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-gray-700/50 flex items-center justify-center shrink-0 text-sm">
                             {GAME_TYPES[m.type]?.icon}
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-gray-200 truncate">
                               {GAME_TYPES[m.type]?.name}
                             </p>
-                            <p className="text-xs text-gray-500 flex items-center gap-1">
+                            <p className="text-[11px] md:text-xs text-gray-500 flex items-center gap-1">
                               <User className="w-3 h-3" />
-                              {m.creatorName}
-                              <span className="mx-1">·</span>
+                              <span className="truncate max-w-[80px] md:max-w-none">{m.creatorName}</span>
+                              <span className="mx-0.5">·</span>
                               <Coins className="w-3 h-3" />
                               {m.bet}G
                             </p>
@@ -744,7 +796,7 @@ export function PvPArena() {
                           whileTap={{ scale: 0.95 }}
                           onClick={() => handleJoin(m.id)}
                           disabled={joining === m.id}
-                          className="shrink-0 ml-3 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
+                          className="shrink-0 ml-2 md:ml-3 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white px-2.5 md:px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
                         >
                           {joining === m.id ? (
                             <Loader2 className="w-3 h-3 animate-spin" />
