@@ -619,19 +619,19 @@ export function PvPArena({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-gray-800/50 border border-orange-500/30 rounded-xl p-4 space-y-3"
+      className="bg-muted/50 border border-orange-500/30 rounded-xl p-4 space-y-3"
     >
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold text-orange-400 flex items-center gap-1">
           {GAME_TYPES[match.type]?.icon}
           {GAME_TYPES[match.type]?.name}
         </span>
-        <span className="text-xs text-gray-400 flex items-center gap-1">
+        <span className="text-xs text-muted-foreground flex items-center gap-1">
           <Coins className="w-3 h-3" /> 赌注 {match.bet}G
         </span>
       </div>
 
-      <div className="text-center text-sm text-gray-400">
+      <div className="text-center text-sm text-muted-foreground">
         <User className="w-3 h-3 inline mr-1" />
         对手：{match.player2Name ?? "等待中"}
       </div>
@@ -641,7 +641,7 @@ export function PvPArena({
         <div className="space-y-3">
           {!submitted ? (
             <>
-              <p className="text-sm text-gray-300 text-center">
+              <p className="text-sm text-foreground/80 text-center">
                 选择你的出拳：
               </p>
               <div className="flex justify-center gap-3">
@@ -652,10 +652,10 @@ export function PvPArena({
                     whileTap={{ scale: 0.9 }}
                     onClick={() => handleRpsSubmit(m)}
                     disabled={submitting}
-                    className="w-20 h-20 rounded-xl text-3xl flex flex-col items-center justify-center gap-1 border-2 border-gray-700 bg-gray-800/50 hover:border-orange-500 hover:bg-gray-700/50 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-20 h-20 rounded-xl text-3xl flex flex-col items-center justify-center gap-1 border-2 border-border bg-muted/50 hover:border-orange-500 hover:bg-gray-700/50 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {RPS_EMOJI[m]}
-                    <span className="text-[10px] text-gray-400">
+                    <span className="text-[10px] text-muted-foreground">
                       {RPS_NAMES[m]}
                     </span>
                   </motion.button>
@@ -671,7 +671,7 @@ export function PvPArena({
               >
                 {rpsMove ? RPS_EMOJI[rpsMove] : "❓"}
               </motion.div>
-              <p className="text-sm text-gray-300">
+              <p className="text-sm text-foreground/80">
                 已出拳，等待对手...
               </p>
             </div>
@@ -689,8 +689,8 @@ export function PvPArena({
           >
             🎲
           </motion.div>
-          <p className="text-sm text-gray-300">正在与对手对决中...</p>
-          <p className="text-xs text-gray-500">
+          <p className="text-sm text-foreground/80">正在与对手对决中...</p>
+          <p className="text-xs text-muted-foreground/70">
             骰子结果将在对手加入时自动揭晓
           </p>
         </div>
@@ -703,13 +703,13 @@ export function PvPArena({
             key={`${mathProblem.a}-${mathProblem.op}-${mathProblem.b}`}
             initial={{ scale: 1.3, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="text-xl font-bold text-center text-white"
+            className="text-xl font-bold text-center text-primary-foreground"
           >
             {String(mathProblem.a)}{" "}
             {mathProblem.op === "+" ? "+" : "−"}{" "}
             {String(mathProblem.b)} = ?
           </motion.p>
-          <p className="text-xs text-center text-gray-500">
+          <p className="text-xs text-center text-muted-foreground/70">
             先答对者获胜，答错则对手获胜
           </p>
           <div className="flex gap-2">
@@ -721,7 +721,7 @@ export function PvPArena({
                 if (e.key === "Enter") handleMathSubmit();
               }}
               placeholder="输入答案..."
-              className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-orange-500"
+              className="flex-1 bg-muted border border-border rounded-lg px-3 py-2 text-primary-foreground text-sm focus:outline-none focus:border-orange-500"
               autoFocus
               disabled={submitting}
             />
@@ -730,7 +730,7 @@ export function PvPArena({
               whileTap={{ scale: 0.98 }}
               onClick={handleMathSubmit}
               disabled={submitting || !mathAnswer}
-              className="px-4 py-2 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-colors"
+              className="px-4 py-2 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground rounded-lg text-sm font-semibold transition-colors"
             >
               {submitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -743,12 +743,12 @@ export function PvPArena({
       ) : null}
 
       {match.type === "math" && !hasMathProblem ? (
-        <div className="text-center py-4 text-sm text-gray-500">
+        <div className="text-center py-4 text-sm text-muted-foreground/70">
           等待题目生成...
         </div>
       ) : null}
 
-      <div className="flex gap-2 pt-2 border-t border-gray-700/50">
+      <div className="flex gap-2 pt-2 border-t border-border/50">
         <button
           onClick={handleForfeit}
           className="flex-1 text-xs text-red-400/60 hover:text-red-400 transition-colors py-1"
@@ -757,7 +757,7 @@ export function PvPArena({
         </button>
         <button
           onClick={handleLeave}
-          className="flex-1 text-xs text-gray-500 hover:text-gray-300 transition-colors py-1"
+          className="flex-1 text-xs text-muted-foreground/70 hover:text-foreground/80 transition-colors py-1"
         >
           离开（保持对决）
         </button>
@@ -774,7 +774,7 @@ export function PvPArena({
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg shadow-orange-600/20 transition-all"
+                className="flex items-center gap-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-primary-foreground px-4 py-2 rounded-xl text-sm font-semibold shadow-lg shadow-orange-600/20 transition-all"
               >
                 <Swords className="w-4 h-4" />
                 PvP 竞技场
@@ -783,10 +783,10 @@ export function PvPArena({
         />
         )}
 
-        <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto bg-gradient-to-b from-gray-900 to-gray-950 border-gray-800 text-gray-100 p-0 gap-0 dark">
+        <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto bg-card border-border text-foreground p-0 gap-0">
           <div className="sticky top-0 z-10 bg-gray-900/95 backdrop-blur border-b border-gray-800 px-6 py-4">
             <DialogHeader>
-              <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+              <DialogTitle className="text-lg font-bold text-primary-foreground flex items-center gap-2">
                 <Swords className="w-5 h-5 text-orange-400" />
                 PvP 竞技场
               </DialogTitle>
@@ -799,14 +799,14 @@ export function PvPArena({
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-gray-800/50 border border-orange-500/30 rounded-xl p-4 space-y-3"
+                className="bg-muted/50 border border-orange-500/30 rounded-xl p-4 space-y-3"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-orange-400 flex items-center gap-1">
                     {GAME_TYPES[activeMatch.type]?.icon}
                     {GAME_TYPES[activeMatch.type]?.name}
                   </span>
-                  <span className="text-xs text-gray-400 flex items-center gap-1">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Coins className="w-3 h-3" /> 赌注 {activeMatch.bet}G
                   </span>
                 </div>
@@ -819,8 +819,8 @@ export function PvPArena({
                   >
                     ⏳
                   </motion.div>
-                  <p className="text-sm text-gray-300">等待对手加入...</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-sm text-foreground/80">等待对手加入...</p>
+                  <p className="text-xs text-muted-foreground/70">
                     对决 #{activeMatch.id}
                     {" · "}5 分钟后无人加入将自动取消
                   </p>
@@ -847,8 +847,8 @@ export function PvPArena({
                   isWinner
                     ? "bg-gradient-to-b from-yellow-900/30 to-yellow-950/30 border-yellow-600/30"
                     : matchResult.winner == null
-                    ? "bg-gray-800/30 border-gray-700/30"
-                    : "bg-gray-800/30 border-red-800/30"
+                    ? "bg-muted/30 border-border/30"
+                    : "bg-muted/30 border-red-800/30"
                 }`}
               >
                 <div className="text-center space-y-2">
@@ -874,7 +874,7 @@ export function PvPArena({
                           initial={{ y: 10, opacity: 0 }}
                           animate={{ y: 0, opacity: 1 }}
                           transition={{ delay: 0.3 }}
-                          className="text-sm text-gray-300"
+                          className="text-sm text-foreground/80"
                         >
                           赢得{" "}
                           <span className="text-yellow-400 font-bold">
@@ -891,13 +891,13 @@ export function PvPArena({
                         animate={{ scale: 1 }}
                         transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
                       >
-                        <AlertTriangle className="w-10 h-10 text-gray-400 mx-auto" />
+                        <AlertTriangle className="w-10 h-10 text-muted-foreground mx-auto" />
                       </motion.div>
                       <motion.p
                         initial={{ y: 10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.2 }}
-                        className="text-base font-semibold text-gray-300"
+                        className="text-base font-semibold text-foreground/80"
                       >
                         {matchResult.message || "平局！金币已退还"}
                       </motion.p>
@@ -916,7 +916,7 @@ export function PvPArena({
                         initial={{ y: 10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.2 }}
-                        className="text-base font-semibold text-gray-300"
+                        className="text-base font-semibold text-foreground/80"
                       >
                         你输了，{matchResult.winner} 获胜
                       </motion.p>
@@ -936,7 +936,7 @@ export function PvPArena({
                       initial={{ rotate: -30, scale: 0 }}
                       animate={{ rotate: 0, scale: 1 }}
                       transition={{ delay: 0.4, type: "spring" }}
-                      className="text-gray-300"
+                      className="text-foreground/80"
                     >
                       {RPS_EMOJI[matchResult.player1Move]}{" "}
                       {RPS_NAMES[matchResult.player1Move]}
@@ -945,7 +945,7 @@ export function PvPArena({
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ delay: 0.7, type: "spring", stiffness: 300 }}
-                      className="text-gray-500 font-bold text-lg"
+                      className="text-muted-foreground/70 font-bold text-lg"
                     >
                       VS
                     </motion.span>
@@ -953,7 +953,7 @@ export function PvPArena({
                       initial={{ rotate: 30, scale: 0 }}
                       animate={{ rotate: 0, scale: 1 }}
                       transition={{ delay: 1.0, type: "spring" }}
-                      className="text-gray-300"
+                      className="text-foreground/80"
                     >
                       {RPS_EMOJI[matchResult.player2Move]}{" "}
                       {RPS_NAMES[matchResult.player2Move]}
@@ -986,7 +986,7 @@ export function PvPArena({
                           initial={{ x: -30, opacity: 0 }}
                           animate={{ x: 0, opacity: 1 }}
                           transition={{ delay: 0.4 }}
-                          className="text-gray-300"
+                          className="text-foreground/80"
                         >
                           🎲 {matchResult.player1Roll}
                         </motion.span>
@@ -994,7 +994,7 @@ export function PvPArena({
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
                           transition={{ delay: 0.6, type: "spring", stiffness: 300 }}
-                          className="text-gray-500 font-bold text-lg"
+                          className="text-muted-foreground/70 font-bold text-lg"
                         >
                           VS
                         </motion.span>
@@ -1002,13 +1002,13 @@ export function PvPArena({
                           initial={{ x: 30, opacity: 0 }}
                           animate={{ x: 0, opacity: 1 }}
                           transition={{ delay: 0.4 }}
-                          className="text-gray-300"
+                          className="text-foreground/80"
                         >
                           🎲 {matchResult.player2Roll}
                         </motion.span>
                       </div>
                       {matchResult.ties != null && matchResult.ties > 1 && (
-                        <p className="text-xs text-center text-gray-500">
+                        <p className="text-xs text-center text-muted-foreground/70">
                           平局 {matchResult.ties} 次，已重掷
                         </p>
                       )}
@@ -1021,9 +1021,9 @@ export function PvPArena({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
-                    className="text-center text-sm space-y-1 bg-gray-800/40 rounded-lg py-2"
+                    className="text-center text-sm space-y-1 bg-muted/40 rounded-lg py-2"
                   >
-                    <p className="text-gray-400">
+                    <p className="text-muted-foreground">
                       正确答案：{" "}
                       <span className="text-green-400 font-bold">
                         {matchResult.correctAnswer}
@@ -1121,7 +1121,7 @@ export function PvPArena({
                           }
                         } catch { fetchLobby(); }
                       }}
-                      className="bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded-lg text-xs font-semibold transition-colors"
+                      className="bg-orange-600 hover:bg-orange-500 text-primary-foreground px-3 py-1 rounded-lg text-xs font-semibold transition-colors"
                     >
                       返回对决
                     </motion.button>
@@ -1130,7 +1130,7 @@ export function PvPArena({
 
                 {/* Header with create button */}
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-300 flex items-center gap-1">
+                  <h3 className="text-sm font-semibold text-foreground/80 flex items-center gap-1">
                     <Clock className="w-4 h-4" />
                     等待挑战
                   </h3>
@@ -1146,7 +1146,7 @@ export function PvPArena({
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
-                          className="flex items-center gap-1 bg-orange-600 hover:bg-orange-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                          className="flex items-center gap-1 bg-orange-600 hover:bg-orange-500 text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
                         >
                           <Plus className="w-3 h-3" />
                           创建对决
@@ -1156,14 +1156,14 @@ export function PvPArena({
 
                     <DialogContent className="sm:max-w-[400px] bg-gray-900 border-gray-800 text-gray-100">
                       <DialogHeader>
-                        <DialogTitle className="text-white">
+                        <DialogTitle className="text-primary-foreground">
                           创建 PvP 对决
                         </DialogTitle>
                       </DialogHeader>
 
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <label className="text-sm text-gray-400">
+                          <label className="text-sm text-muted-foreground">
                             游戏类型
                           </label>
                           <div className="grid grid-cols-3 gap-2">
@@ -1179,7 +1179,7 @@ export function PvPArena({
                                   className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 text-xs transition-all ${
                                     gameType === key
                                       ? "border-orange-500 bg-orange-500/10 text-orange-300"
-                                      : "border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600"
+                                      : "border-border bg-muted/50 text-muted-foreground hover:border-gray-600"
                                   }`}
                                 >
                                   {val.icon}
@@ -1193,7 +1193,7 @@ export function PvPArena({
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-sm text-gray-400 flex items-center gap-1">
+                          <label className="text-sm text-muted-foreground flex items-center gap-1">
                             <Coins className="w-3 h-3" />
                             赌注金额 (10-500G)
                           </label>
@@ -1220,8 +1220,8 @@ export function PvPArena({
                                 onClick={() => setBet(b)}
                                 className={`px-2 py-0.5 rounded text-[10px] transition-colors ${
                                   bet === b
-                                    ? "bg-orange-600 text-white"
-                                    : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                                    ? "bg-orange-600 text-primary-foreground"
+                                    : "bg-muted text-muted-foreground hover:bg-gray-700"
                                 }`}
                               >
                                 {b}G
@@ -1230,7 +1230,7 @@ export function PvPArena({
                           </div>
                         </div>
 
-                        <div className="bg-gray-800/50 rounded-lg p-3 text-xs text-gray-500 space-y-1">
+                        <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground/70 space-y-1">
                           <p>规则：</p>
                           <ul className="list-disc list-inside space-y-0.5">
                             <li>
@@ -1258,7 +1258,7 @@ export function PvPArena({
                           whileTap={{ scale: 0.98 }}
                           onClick={handleCreate}
                           disabled={creating}
-                          className="w-full py-2.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white rounded-xl font-semibold text-sm disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                          className="w-full py-2.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-primary-foreground rounded-xl font-semibold text-sm disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                         >
                           {creating ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -1276,7 +1276,7 @@ export function PvPArena({
                 {lobbyMatches.length === 0 ? (
                   <div className="text-center py-8 space-y-2">
                     <Swords className="w-10 h-10 text-gray-700 mx-auto" />
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground/70">
                       暂无等待中的对决
                     </p>
                     <p className="text-xs text-gray-600">
@@ -1290,7 +1290,7 @@ export function PvPArena({
                         key={m.id}
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="flex items-center justify-between bg-gray-800/40 border border-gray-700/50 rounded-xl p-2.5 md:p-3 hover:border-gray-600/50 transition-colors"
+                        className="flex items-center justify-between bg-muted/40 border border-border/50 rounded-xl p-2.5 md:p-3 hover:border-gray-600/50 transition-colors"
                       >
                         <div className="flex items-center gap-2 md:gap-3 min-w-0">
                           <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-gray-700/50 flex items-center justify-center shrink-0 text-sm">
@@ -1300,7 +1300,7 @@ export function PvPArena({
                             <p className="text-sm font-semibold text-gray-200 truncate">
                               {GAME_TYPES[m.type]?.name}
                             </p>
-                            <p className="text-[11px] md:text-xs text-gray-500 flex items-center gap-1">
+                            <p className="text-[11px] md:text-xs text-muted-foreground/70 flex items-center gap-1">
                               <User className="w-3 h-3" />
                               <span className="truncate max-w-[80px] md:max-w-none">
                                 {m.creatorName}
@@ -1316,7 +1316,7 @@ export function PvPArena({
                           whileTap={{ scale: 0.95 }}
                           onClick={() => handleJoin(m.id)}
                           disabled={joining === m.id}
-                          className="shrink-0 ml-2 md:ml-3 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white px-2.5 md:px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
+                          className="shrink-0 ml-2 md:ml-3 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-primary-foreground px-2.5 md:px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
                         >
                           {joining === m.id ? (
                             <Loader2 className="w-3 h-3 animate-spin" />
@@ -1331,7 +1331,7 @@ export function PvPArena({
                 {/* Recent results */}
                 {recent.length > 0 && (
                   <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-gray-300 flex items-center gap-1">
+                    <h3 className="text-sm font-semibold text-foreground/80 flex items-center gap-1">
                       <Trophy className="w-4 h-4 text-yellow-500" />
                       最近战报
                     </h3>
@@ -1342,7 +1342,7 @@ export function PvPArena({
                         return (
                           <div
                             key={m.id}
-                            className="flex items-center gap-2 text-xs text-gray-500 bg-gray-800/20 rounded-lg px-3 py-2"
+                            className="flex items-center gap-2 text-xs text-muted-foreground/70 bg-muted/20 rounded-lg px-3 py-2"
                           >
                             <span className="shrink-0">
                               {typeInfo?.icon}
@@ -1354,7 +1354,7 @@ export function PvPArena({
                                     {m.winnerName}
                                   </span>
                                   <span> 击败了 </span>
-                                  <span className="text-gray-400">
+                                  <span className="text-muted-foreground">
                                     {m.winnerName ===
                                     m.player1Name
                                       ? m.player2Name
@@ -1362,7 +1362,7 @@ export function PvPArena({
                                   </span>
                                 </>
                               ) : (
-                                <span className="text-gray-500">
+                                <span className="text-muted-foreground/70">
                                   {m.player1Name} vs{" "}
                                   {m.player2Name} - 平局
                                 </span>

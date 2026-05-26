@@ -115,11 +115,11 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
         transition-colors duration-200
         ${
           task.completed
-            ? "bg-[oklch(0.15_0.02_260)] border-[oklch(0.22_0.02_260)] opacity-60"
+            ? "bg-muted/50 border-border/30 opacity-60"
             : isExpired
-            ? "bg-[oklch(0.15_0.02_10)] border-red-500/10 opacity-50"
+            ? "bg-destructive/5 border-destructive/10 opacity-50"
             : canComplete
-            ? `bg-card border-border hover:border-primary/40 hover:bg-[oklch(0.19_0.02_260)] cursor-pointer ${difficultyBorder[task.difficulty]}`
+            ? `bg-card border-border hover:border-primary/40 hover:bg-accent/50 cursor-pointer ${difficultyBorder[task.difficulty]}`
             : "bg-card border-border opacity-70"
         }
       `}
