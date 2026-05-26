@@ -87,9 +87,9 @@ export function Sidebar({
                   ? "bg-emerald-500/10 text-emerald-400"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground",
               ].join(" ")}
-              title={isMobile ? item.label : undefined}
+              title={item.blink ? "有未读信息" : (isMobile ? item.label : undefined)}
             >
-              <span className={`w-5 h-5 flex items-center justify-center ${item.blink ? "animate-pulse text-amber-400" : ""}`}>
+              <span className={`w-5 h-5 flex items-center justify-center ${item.blink ? "animate-[pulse_0.6s_ease-in-out_infinite] text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]" : ""}`}>
                 {item.icon}
               </span>
             </button>

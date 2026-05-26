@@ -30,6 +30,18 @@ export function FriendButton({ open: controlledOpen, onOpenChange }: FriendButto
   const [searching, setSearching] = useState(false);
   const [noteTarget, setNoteTarget] = useState<Friend | null>(null);
   const [noteText, setNoteText] = useState("");
+  const [unreadCounts, setUnreadCounts] = useState<Record<number, number>>({});
+
+  const loadUnread = async () => {
+    try {
+      const lastFriendIds = localStorage.getItem("last_friend_msg_ids") || "";
+      const res = await fetch(`/api/notifications?afterFriendIds=${encodeURIComponent(lastFriendIds)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadCounts(data.friendUnread || {});
+      }
+    } catch {}
+  };
 
   const handleNoteEdit = (f: Friend) => { setNoteTarget(f); setNoteText(f.note || ""); };
   const saveNote = async () => {
@@ -86,7 +98,7 @@ export function FriendButton({ open: controlledOpen, onOpenChange }: FriendButto
     <>
       {!isControlled && (
         <motion.button
-          onClick={() => { setInternalOpen(true); loadData(); }}
+          onClick={() => { setInternalOpen(true); loadData(); loadUnread(); }}
           whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
           className="inline-flex shrink-0 items-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-sm font-bold text-emerald-400 hover:bg-emerald-500/20 transition-colors relative"
         >
@@ -162,9 +174,12 @@ export function FriendButton({ open: controlledOpen, onOpenChange }: FriendButto
                         onClick={() => { setOpen(false); router.push("/pm?friend=" + f.id); }}>
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                          <span className="text-sm font-medium text-foreground truncate">
+                          <span className={`text-sm font-medium truncate ${unreadCounts[f.id] ? "text-amber-400 animate-pulse" : "text-foreground"}`}>
                             {f.name || f.username}
                             {f.note && <span className="text-[10px] text-muted-foreground ml-1">({f.note})</span>}
+                            {unreadCounts[f.id] > 0 && (
+                              <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">{unreadCounts[f.id]}</span>
+                            )}
                           </span>
                         </div>
                         <div className="text-[10px] text-muted-foreground ml-4">Lv.{f.level}</div>
