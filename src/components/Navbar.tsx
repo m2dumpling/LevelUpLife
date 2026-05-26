@@ -46,52 +46,34 @@ export function Navbar({ stats }: NavbarProps) {
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-      <div className="max-w-4xl mx-auto px-3 md:px-4 h-14 flex items-center justify-between">
-        {/* Logo + 奖牌 */}
-        <div className="flex items-center gap-1.5 md:gap-2">
-          <motion.div
-            animate={{ rotate: [0, 10, -10, 0] }}
-            transition={{ duration: 4, repeat: Infinity }}
-          >
-            <Swords className="w-5 h-5 text-primary shrink-0" />
-          </motion.div>
-          <span className="text-xs md:text-sm font-bold text-foreground truncate max-w-[60px] md:max-w-none">
-            LvUp
-          </span>
+      <div className="max-w-4xl mx-auto px-3 md:px-4 h-14 flex items-center w-full gap-3 md:gap-4">
+        {/* Logo */}
+        <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+          <Swords className="w-5 h-5 text-primary" />
+          <span className="text-sm font-bold text-foreground">LevelUp Life</span>
           {equippedMedals.map((medal) => (
-            <motion.span
-              key={medal.medalKey}
-              initial={{ scale: 0, rotate: -20 }}
-              animate={{ scale: 1, rotate: 0 }}
-              title={`${medal.medalName} · +${medal.xpBonusPercent}% XP`}
-              className="text-sm cursor-default"
-            >
-              {medal.medalEmoji}
-            </motion.span>
+            <span key={medal.medalKey} title={`${medal.medalName} · +${medal.xpBonusPercent}% XP`} className="text-sm cursor-default">{medal.medalEmoji}</span>
           ))}
         </div>
 
+        <div className="flex-1" />
+
         {/* 状态概览 */}
         {stats && (
-          <div className="flex items-center gap-2 md:gap-4 shrink-0">
+          <div className="flex items-center gap-3 md:gap-5 shrink-0">
             <div className="flex items-center gap-1">
-              <span className="text-[9px] md:text-[10px] text-muted-foreground uppercase">Lv</span>
-              <span className="text-xs md:text-sm font-bold text-primary">{stats.level}</span>
+              <span className="text-[10px] text-muted-foreground uppercase">Lv</span>
+              <span className="text-sm font-bold text-primary">{stats.level}</span>
             </div>
-            <div className="hidden sm:flex items-center gap-1">
+            <div className="flex items-center gap-1">
               <span className="text-[10px] text-muted-foreground uppercase">XP</span>
               <span className="text-sm font-bold text-emerald-400">{stats.xp}</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-[9px] md:text-[10px] text-muted-foreground uppercase">G</span>
-              <span className="text-xs md:text-sm font-bold text-amber-400">{stats.gold}</span>
+              <span className="text-[10px] text-muted-foreground uppercase">G</span>
+              <span className="text-sm font-bold text-amber-400">{stats.gold}</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="text-muted-foreground hover:text-destructive"
-            >
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
               <LogOut className="w-4 h-4" />
             </Button>
           </div>

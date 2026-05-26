@@ -77,8 +77,10 @@ export default function PmPage() {
   const send = async () => {
     if (!input.trim() || !activeFriend || sending) return;
     setSending(true);
-    await fetch("/api/friend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "send", friendId: activeFriend.id, message: input.trim() }) });
-    setInput(""); setSending(false); loadMessages(activeFriend.id); inputRef.current?.focus();
+    const body: Record<string, unknown> = { action: "send", friendId: activeFriend.id, message: input.trim() };
+    if (replyTarget) { body.replyTo = replyTarget.id; body.replyPreview = replyTarget.message.slice(0, 40); }
+    await fetch("/api/friend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    setInput(""); setSending(false); setReplyTarget(null); loadMessages(activeFriend.id); inputRef.current?.focus();
   };
 
   const doGift = async () => {
@@ -157,7 +159,14 @@ export default function PmPage() {
               <span className="text-[10px] text-muted-foreground/30 tabular-nums opacity-0 group-hover:opacity-100 transition-opacity mr-1.5">{formatStamp(msg.createdAt)}</span>
             </div>
           )}
-          <div className={`${showHeader ? "ml-9" : "ml-11"} text-sm text-foreground/90 leading-relaxed break-words whitespace-pre-wrap`}>{msg.message}</div>
+          <div className={`${showHeader ? "ml-9" : "ml-11"} text-sm text-foreground/90 leading-relaxed break-words whitespace-pre-wrap`}>
+            {msg.message.startsWith("[回复] ") ? (
+              <>
+                <span className="text-[11px] text-primary/60 block">{msg.message.split("\n")[0]}</span>
+                <span>{msg.message.split("\n").slice(1).join("\n")}</span>
+              </>
+            ) : msg.message}
+          </div>
         </div>
       );
     });
