@@ -61,6 +61,53 @@ Medals **multiply**. Five Copper Medals = 1.02⁵ ≈ **+10.4% XP** on every tas
 - **GitHub-style heatmap** 🟩 tracks your habit density
 - **Monthly view** 🗓️ shows the next 30 days at a glance
 
+### ⚔️ PvP Arena — Battle Other Heroes
+Challenge other players in real-time duels. Winner takes the pot (minus 2G tax).
+
+| Mode | How It Works |
+|------|-------------|
+| ✊ Rock-Paper-Scissors | Both players pick a move → reveal → winner announced with animated showdown |
+| 🎲 Dice Duel | Each player rolls a D20 — highest roll wins. Ties trigger re-rolls up to 3x |
+| ⏱ Speed Math | Race to solve a math problem. Correct answer + speed = victory |
+
+- Create a duel with 10–500G bets
+- Join waiting duels from other players
+- Real-time polling shows opponent's moves
+- Daily limit: 10 PvP matches
+- Entry requirement: complete at least 1 task today
+
+### 🎰 Daily Lottery
+Finish 3+ habits today → spin the wheel for free! Win medals, gold, rare items.
+
+### 🐲 World Boss
+Every habit completion deals damage to the shared World Boss. Defeat it together for server-wide rewards.
+
+### 🏰 Guild Hall — Fight Together
+- Create or join a guild with a 6-digit invite code
+- **Full-screen Discord-style chat** `/chat` with colored avatars, message grouping, and Beijing-time timestamps
+- Guild HP bar — damaged when members miss tasks
+- **Guild leaderboard** ranks guilds by total XP
+- Leader can kick members; members can leave
+
+### 🐾 Pet System
+Hatch pet eggs from task rewards. Each pet gives passive buffs (XP bonus, HP recovery, extra gold).
+
+### 🏡 Village
+Build your village! Each completed task contributes resources. Unlock buildings for permanent bonuses.
+
+### 🌦 Weather System
+Dynamic weather affects task rewards — sunny days boost XP, storms challenge you. Check the weather badge on your dashboard.
+
+### 🎭 Class System
+Your task history determines your class (Warrior, Mage, Rogue, etc.) with unique bonuses.
+
+### 🔒 Multi-User + Admin Panel
+- **Register/Login** — anyone can create an account (username + password)
+- **Admin dashboard** at `/admin` — user stats, registration trends, country distribution
+- Content audit flags suspicious task titles
+- Ban/unban users, export data, download DB backup
+- Only the seed-created `admin` account can access — no privilege escalation possible
+
 ---
 
 ## 📱 Also on Android
