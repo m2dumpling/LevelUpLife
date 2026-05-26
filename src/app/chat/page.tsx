@@ -347,7 +347,7 @@ export default function ChatPage() {
                     <span className="text-[10px] text-muted-foreground/30 tabular-nums opacity-0 group-hover:opacity-100 transition-opacity mr-1.5">{formatStamp(msg.createdAt)}</span>
                   </div>
                 )}
-                <div className={`${showHeader ? "ml-9" : "ml-11"} text-sm text-foreground/90 leading-relaxed break-words whitespace-pre-wrap`}>
+                <div className="ml-9 text-sm text-foreground/90 leading-relaxed break-words whitespace-pre-wrap">
                   {msg.message}
                 </div>
               </div>
@@ -382,7 +382,6 @@ export default function ChatPage() {
               maxLength={500}
               style={{ fontSize: "16px" }}
               className="flex-1 bg-card border border-border rounded-lg px-3 py-2.5 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"
-              autoFocus
             />
             <Button onClick={send} disabled={!input.trim() || sending} size="sm" className="shrink-0">
               <Send className="w-4 h-4" />
