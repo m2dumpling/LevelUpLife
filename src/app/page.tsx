@@ -211,17 +211,20 @@ export default function HomePage() {
       try {
         const lastGuildId = parseInt(localStorage.getItem("last_guild_msg_id") || "0");
         const lastFriendCheck = parseInt(localStorage.getItem("last_friend_check") || "0");
-        const res = await fetch(`/api/notifications?afterGuildId=${lastGuildId}&after=${lastFriendCheck}`);
+        const lastGiftId = parseInt(localStorage.getItem("last_gift_id") || "0");
+        const res = await fetch(`/api/notifications?afterGuildId=${lastGuildId}&after=${lastFriendCheck}&afterGiftId=${lastGiftId}`);
         if (res.ok) {
           const data = await res.json();
           setGuildBlink(data.guildUnread > 0);
           setFriendBlink((Object.values(data.friendUnread) as number[]).some((v) => v > 0) || data.requestsCount > 0);
-          // Show gift alerts as NPC-style toast
           if (data.giftAlerts?.length > 0) {
+            let maxId = lastGiftId;
             for (const g of data.giftAlerts) {
               const itemLabel = g.giftType === "gold" ? `${g.giftValue}G` : g.giftValue;
               window.dispatchEvent(new CustomEvent("gift-alert", { detail: `🎁 ${g.fromUsername} 送给你 ${itemLabel}` }));
+              if (g.giftId > maxId) maxId = g.giftId;
             }
+            localStorage.setItem("last_gift_id", String(maxId));
           }
         }
       } catch {}
