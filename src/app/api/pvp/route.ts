@@ -171,7 +171,7 @@ export async function POST(request: Request) {
       }
 
       // 限速检查
-      const rate = checkRate(userId, "pvp_match", 3);
+      const rate = checkRate(userId, "pvp_match", 10);
       if (!rate.allowed) {
         return NextResponse.json({ error: rate.message }, { status: 429 });
       }

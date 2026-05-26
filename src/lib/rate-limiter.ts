@@ -68,7 +68,7 @@ export function checkRate(
     const messages: Record<string, string> = {
       task_create: "操作太频繁了，每分钟最多创建 3 个任务，请稍后再试",
       task_complete: "操作太频繁了，每分钟最多完成 2 个任务，请稍后再试",
-      pvp_match: "今日 PvP 对战次数已达上限（每日 3 次），明天再来吧",
+      pvp_match: "今日 PvP 对战次数已达上限（每日 10 次），明天再来吧",
     };
     return { allowed: false, message: messages[actionType] };
   }

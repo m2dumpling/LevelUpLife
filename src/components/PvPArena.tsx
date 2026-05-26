@@ -727,7 +727,7 @@ export function PvPArena() {
                             <li>双方各自出赌注，胜者赢走奖池（扣除 2G 税收）</li>
                             <li>平局则双方金币退还</li>
                             <li>需要今天至少完成 1 个任务才能参与</li>
-                            <li>每日最多创建 3 次 PvP 对决</li>
+                            <li>每日最多创建 10 次 PvP 对决</li>
                           </ul>
                         </div>
 
