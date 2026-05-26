@@ -212,7 +212,8 @@ export async function GET(request: Request) {
     const matchIdParam = searchParams.get("matchId");
 
     // ── Status check (polling by creator/joiner) ──
-    if (action === "status" && matchIdParam) {
+    // Accept both ?action=status&matchId=X and legacy ?matchId=X
+    if (matchIdParam) {
       const matchId = parseInt(matchIdParam);
       const match = getMatchRow(matchId);
 
