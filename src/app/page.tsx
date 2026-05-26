@@ -57,13 +57,13 @@ function checkAchievements(
 
 /** Sidebar panel definitions */
 const SIDEBAR_ITEMS: SidebarItem[] = [
-  { id: "weather", icon: <Cloud className="w-5 h-5" />, label: "天气" },
-  { id: "shop", icon: <Store className="w-5 h-5" />, label: "商店" },
-  { id: "backpack", icon: <Package className="w-5 h-5" />, label: "背包" },
-  { id: "lottery", icon: <Gift className="w-5 h-5" />, label: "每日抽奖" },
-  { id: "pvp", icon: <Swords className="w-5 h-5" />, label: "PvP 竞技场" },
   { id: "guild", icon: <Shield className="w-5 h-5" />, label: "公会" },
   { id: "friends", icon: <Users className="w-5 h-5" />, label: "好友" },
+  { id: "shop", icon: <Store className="w-5 h-5" />, label: "商店" },
+  { id: "backpack", icon: <Package className="w-5 h-5" />, label: "背包" },
+  { id: "pvp", icon: <Swords className="w-5 h-5" />, label: "PvP 竞技场" },
+  { id: "weather", icon: <Cloud className="w-5 h-5" />, label: "天气" },
+  { id: "lottery", icon: <Gift className="w-5 h-5" />, label: "每日抽奖" },
 ];
 
 /** Simple weather display data */
@@ -328,7 +328,7 @@ export default function HomePage() {
       <Sidebar
         items={SIDEBAR_ITEMS.map(item => ({
           ...item,
-          badge: item.id === "guild" ? guildBadge : item.id === "friends" ? friendBadge : 0,
+          blink: (item.id === "guild" && guildBadge > 0) || (item.id === "friends" && friendBadge > 0),
         }))}
         activePanel={activePanel}
         onPanelClick={handlePanelClick}

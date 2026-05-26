@@ -8,7 +8,7 @@ export interface SidebarItem {
   id: string;
   icon: React.ReactNode;
   label: string;
-  badge?: number;
+  blink?: boolean;
 }
 
 interface SidebarProps {
@@ -89,13 +89,8 @@ export function Sidebar({
               ].join(" ")}
               title={isMobile ? item.label : undefined}
             >
-              <span className="w-5 h-5 flex items-center justify-center relative">
+              <span className={`w-5 h-5 flex items-center justify-center ${item.blink ? "animate-pulse text-amber-400" : ""}`}>
                 {item.icon}
-                {item.badge && item.badge > 0 && (
-                  <span className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center">
-                    {item.badge > 99 ? "99+" : item.badge}
-                  </span>
-                )}
               </span>
             </button>
 
