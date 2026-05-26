@@ -318,24 +318,30 @@ export default function ChatPage() {
             const isReply = !!msg.replyTo;
             const isNotified = myUserId && msg.replyTo && notifiedIds.has(msg.id);
 
+            const isMine = myUserId && msg.userId === myUserId;
             return (
               <div
                 key={msg.id}
                 onContextMenu={(e) => handleContextMenu(e, msg)}
-                className={`${showHeader ? "mt-3" : "mt-0"} group hover:bg-muted/30 rounded px-2 py-0.5 transition-colors cursor-default ${
+                className={`${showHeader ? "mt-3" : "mt-0"} group transition-colors cursor-default ${
                   isNotified ? "bg-amber-500/10 border-l-2 border-amber-400" : ""
-                }`}
+                } ${isMine ? "flex flex-col items-end" : "hover:bg-muted/30 rounded px-2 py-0.5"}`}
               >
                 {/* 回复引用 */}
                 {isReply && (
-                  <div className={`${showHeader ? "ml-9" : "ml-11"} mb-1 flex items-center gap-1.5 text-[11px] text-muted-foreground`}>
+                  <div className={`mb-1 flex items-center gap-1.5 text-[11px] text-muted-foreground ${isMine ? "mr-0" : "ml-9"}`}>
                     <Reply className="w-3 h-3" />
                     <span className="text-primary/60">回复</span>
                     <span className="font-medium text-foreground/60">{msg.replyUsername}</span>
                     <span className="text-muted-foreground/40 truncate max-w-[120px] md:max-w-[200px]">{msg.replyPreview}</span>
                   </div>
                 )}
-                {showHeader ? (
+                {isMine ? (
+                  <div className="flex items-center gap-2 justify-end mb-0.5">
+                    <span className="text-[10px] text-muted-foreground/50 tabular-nums">{formatStamp(msg.createdAt)}</span>
+                    <span className="text-sm font-semibold text-primary/80">我</span>
+                  </div>
+                ) : showHeader ? (
                   <div className="flex items-baseline gap-2 mb-0.5">
                     <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ backgroundColor: userColor(msg.username) }}>{msg.username[0]}</div>
                     <span className="text-sm font-semibold" style={{ color: userColor(msg.username) }}>{msg.username}</span>
@@ -347,7 +353,9 @@ export default function ChatPage() {
                     <span className="text-[10px] text-muted-foreground/30 tabular-nums opacity-0 group-hover:opacity-100 transition-opacity mr-1.5">{formatStamp(msg.createdAt)}</span>
                   </div>
                 )}
-                <div className="ml-9 text-sm text-foreground/90 leading-relaxed break-words whitespace-pre-wrap">
+                <div className={`text-sm leading-relaxed break-words whitespace-pre-wrap px-3 py-1.5 rounded-2xl max-w-[75%] ${
+                  isMine ? "bg-primary/20 text-foreground mr-0" : "ml-9 text-foreground/90"
+                }`}>
                   {msg.message}
                 </div>
               </div>

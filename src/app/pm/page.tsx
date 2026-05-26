@@ -158,8 +158,13 @@ export default function PmPage() {
       return (
         <div key={msg.id}
           onContextMenu={(e) => handleContextMenu(e, msg)}
-          className={`${showHeader ? "mt-3" : "mt-0"} group hover:bg-muted/30 rounded px-2 py-0.5 transition-colors cursor-default`}>
-          {showHeader ? (
+          className={`${showHeader ? "mt-3" : "mt-0"} group transition-colors cursor-default ${isMine ? "flex flex-col items-end" : "hover:bg-muted/30 rounded px-2 py-0.5"}`}>
+          {isMine ? (
+            <div className="flex items-center gap-2 justify-end mb-0.5">
+              <span className="text-[10px] text-muted-foreground/50 tabular-nums">{formatStamp(msg.createdAt)}</span>
+              <span className="text-sm font-semibold text-primary/80">我</span>
+            </div>
+          ) : showHeader ? (
             <div className="flex items-baseline gap-2 mb-0.5">
               <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ backgroundColor: userColor(senderName) }}>{senderName[0]}</div>
               <span className="text-sm font-semibold" style={{ color: userColor(senderName) }}>{senderName}</span>
@@ -171,8 +176,8 @@ export default function PmPage() {
               <span className="text-[10px] text-muted-foreground/30 tabular-nums opacity-0 group-hover:opacity-100 transition-opacity mr-1.5">{formatStamp(msg.createdAt)}</span>
             </div>
           )}
-          <div className="ml-9 text-sm text-foreground/90 leading-relaxed break-words whitespace-pre-wrap">
-            {msg.message.startsWith("[回复] ") ? (
+          <div className={`text-sm leading-relaxed break-words whitespace-pre-wrap px-3 py-1.5 rounded-2xl max-w-[75%] ${isMine ? "bg-primary/20 text-foreground mr-0" : "ml-9 text-foreground/90"}`}>
+            {!isMine && msg.message.startsWith("[回复] ") ? (
               <>
                 <span className="text-[11px] text-primary/60 block">{msg.message.split("\n")[0]}</span>
                 <span>{msg.message.split("\n").slice(1).join("\n")}</span>
