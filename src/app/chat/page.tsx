@@ -74,7 +74,7 @@ export default function ChatPage() {
     const res = await fetch("/api/guild/gift", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ toUserId: giftTarget.userId, giftType, giftValue: value }) });
     const data = await res.json();
     setGiftMsg(data.success ? data.message : (data.error || "送礼失败"));
-    if (data.success) setTimeout(() => { setGiftTarget(null); setGiftMsg(""); }, 1500);
+    if (data.success) { window.dispatchEvent(new Event("stats-changed")); window.dispatchEvent(new Event("inventory-changed")); setTimeout(() => { setGiftTarget(null); setGiftMsg(""); }, 1500); }
   };
 
   /* ── 数据 ── */

@@ -106,7 +106,7 @@ export function GuildPanel({ onClose }: { onClose: () => void }) {
     const data = await res.json();
     setGiftMsg(data.success ? data.message : (data.error || "送礼失败"));
     setGiftLoading(false);
-    if (data.success) setTimeout(() => setGiftTarget(null), 1500);
+    if (data.success) { window.dispatchEvent(new Event("stats-changed")); window.dispatchEvent(new Event("inventory-changed")); setTimeout(() => setGiftTarget(null), 1500); }
   };
 
   // 当前用户

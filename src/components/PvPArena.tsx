@@ -383,6 +383,7 @@ export function PvPArena({
       setMathAnswer("");
       setCreateOpen(false);
       window.dispatchEvent(new Event("task-completed"));
+      window.dispatchEvent(new Event("stats-changed"));
     } catch {
       setCreateError("网络错误");
     } finally {
@@ -423,6 +424,7 @@ export function PvPArena({
 
       fetchLobby();
       window.dispatchEvent(new Event("task-completed"));
+      window.dispatchEvent(new Event("stats-changed"));
     } catch {
       alert("网络错误");
     } finally {
@@ -457,6 +459,7 @@ export function PvPArena({
         setView("result");
         if (data.newGold !== undefined) {
           window.dispatchEvent(new Event("task-completed"));
+      window.dispatchEvent(new Event("stats-changed"));
         }
         setSubmitted(false);
       }
@@ -494,6 +497,7 @@ export function PvPArena({
       setView("result");
       if (data.newGold !== undefined) {
         window.dispatchEvent(new Event("task-completed"));
+      window.dispatchEvent(new Event("stats-changed"));
       }
     } catch {
       alert("网络错误");
@@ -518,6 +522,7 @@ export function PvPArena({
         }),
       });
       window.dispatchEvent(new Event("task-completed"));
+      window.dispatchEvent(new Event("stats-changed"));
     }
     resetState();
     fetchLobby();
@@ -543,6 +548,7 @@ export function PvPArena({
       );
       if (data.newGold !== undefined) {
         window.dispatchEvent(new Event("task-completed"));
+      window.dispatchEvent(new Event("stats-changed"));
       }
     }
   };
@@ -574,6 +580,7 @@ export function PvPArena({
           }),
         }).catch(() => {});
         window.dispatchEvent(new Event("task-completed"));
+      window.dispatchEvent(new Event("stats-changed"));
       }
       resetState();
     }

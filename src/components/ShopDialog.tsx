@@ -47,6 +47,7 @@ export function ShopDialog({ gold, inventory, onBuy, open: controlledOpen, onOpe
       }
       await onBuy(ore.oreKey);
       window.dispatchEvent(new Event("inventory-changed"));
+      window.dispatchEvent(new Event("stats-changed"));
     } catch {
       setError("网络错误，请重试");
     } finally {

@@ -102,7 +102,7 @@ export default function PmPage() {
     const res = await fetch("/api/guild/gift", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ toUserId: activeFriend.id, giftType, giftValue: value }) });
     const data = await res.json();
     setGiftMsg(data.success ? data.message : (data.error || "送礼失败"));
-    if (data.success) setTimeout(() => { setGiftOpen(false); setGiftMsg(""); }, 1500);
+    if (data.success) { window.dispatchEvent(new Event("stats-changed")); window.dispatchEvent(new Event("inventory-changed")); setTimeout(() => { setGiftOpen(false); setGiftMsg(""); }, 1500); }
   };
 
   const handleContextMenu = (e: React.MouseEvent, msg: ChatMessage) => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY, msg }); };

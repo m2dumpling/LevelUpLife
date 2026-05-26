@@ -82,6 +82,7 @@ export function VillageWidget() {
         setUpgradeResult(
           `${getBuildingName(selectedBuilding)} 升级成功！消耗 ${data.cost} 金币`
         );
+        window.dispatchEvent(new Event("stats-changed"));
         setSelectedBuilding(null);
       } else {
         setError(data.error || "升级失败");

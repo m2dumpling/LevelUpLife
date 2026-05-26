@@ -45,6 +45,7 @@ export function LotteryButton({ open: controlledOpen, onOpenChange }: LotteryBut
     if (data.success) {
       setResult(data.result);
       window.dispatchEvent(new Event("inventory-changed"));
+      window.dispatchEvent(new Event("stats-changed"));
       // refresh status
       const statusRes = await fetch("/api/lottery");
       if (statusRes.ok) setStatus(await statusRes.json());
