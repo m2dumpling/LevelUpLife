@@ -92,7 +92,7 @@ export function GuildPanel({ onClose }: { onClose: () => void }) {
 
   const handleGift = (userId: number, username: string) => { setGiftTarget({ userId, username }); setGiftMsg(""); };
   const handleAddFriend = async (friendId: number, username: string) => {
-    const res = await fetch("/api/friend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "add", friendId }) });
+    const res = await fetch("/api/friend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "request", friendId }) });
     const data = await res.json();
     setError(data.success ? `已添加 ${username} 为好友！` : (data.error || "添加失败"));
     setTimeout(() => setError(""), 3000);

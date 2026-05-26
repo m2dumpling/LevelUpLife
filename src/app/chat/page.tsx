@@ -66,7 +66,7 @@ export default function ChatPage() {
 
   const handleGift = (userId: number, username: string) => { setGiftTarget({ userId, username }); setGiftMsg(""); };
   const handleAddFriend = async (friendId: number) => {
-    await fetch("/api/friend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "add", friendId }) });
+    await fetch("/api/friend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "request", friendId }) });
   };
   const doGift = async () => {
     if (!giftTarget) return;
