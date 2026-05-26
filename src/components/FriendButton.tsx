@@ -83,11 +83,13 @@ export function FriendButton({ open: controlledOpen, onOpenChange }: FriendButto
   };
 
   const rejectRequest = async (reqId: number) => {
+    if (!confirm("确定要拒绝该好友请求吗？")) return;
     await fetch("/api/friend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "reject", friendId: reqId }) });
     loadData();
   };
 
   const removeFriend = async (friendId: number) => {
+    if (!confirm("确定要删除该好友吗？")) return;
     await fetch("/api/friend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "remove", friendId }) });
     loadData();
   };

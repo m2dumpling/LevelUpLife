@@ -244,6 +244,7 @@ export default function HomePage() {
   );
 
   const handleDelete = useCallback(async (id: number) => {
+    if (!confirm("确定要删除该任务吗？")) return;
     await deleteTask(id);
     window.dispatchEvent(new Event("task-completed"));
     refreshStats();

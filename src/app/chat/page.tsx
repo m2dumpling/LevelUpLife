@@ -157,6 +157,7 @@ export default function ChatPage() {
   };
 
   const doLeave = async () => {
+    if (!confirm("确定要退出公会吗？")) return;
     await fetch("/api/guild", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

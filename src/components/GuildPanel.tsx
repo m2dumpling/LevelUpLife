@@ -218,6 +218,7 @@ export function GuildPanel({ onClose }: { onClose: () => void }) {
   };
 
   const doLeave = async () => {
+    if (!confirm("确定要退出公会吗？")) return;
     setError("");
     setActionLoading(true);
     try {
@@ -241,6 +242,7 @@ export function GuildPanel({ onClose }: { onClose: () => void }) {
   };
 
   const doKick = async (targetUserId: number) => {
+    if (!confirm("确定要将该成员踢出公会吗？")) return;
     setError("");
     try {
       const res = await fetch("/api/guild", {

@@ -39,6 +39,7 @@ export function Navbar({ stats }: NavbarProps) {
   }, [fetchEquipped]);
 
   const handleLogout = async () => {
+    if (!confirm("确定要退出登录吗？")) return;
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
     router.refresh();
