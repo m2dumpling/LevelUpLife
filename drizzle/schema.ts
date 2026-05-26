@@ -246,3 +246,29 @@ export const rateLimit = sqliteTable("rate_limit", {
   count: integer("count").notNull().default(0),
   windowStart: text("window_start").notNull(),
 });
+
+// ── 好友 ──
+export const friend = sqliteTable("friend", {
+  id: integer("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  friendId: integer("friend_id").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
+export const friendChat = sqliteTable("friend_chat", {
+  id: integer("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  friendId: integer("friend_id").notNull(),
+  message: text("message").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
+// ── 礼物记录 ──
+export const giftLog = sqliteTable("gift_log", {
+  id: integer("id").primaryKey(),
+  fromUserId: integer("from_user_id").notNull(),
+  toUserId: integer("to_user_id").notNull(),
+  giftType: text("gift_type").notNull(),
+  giftValue: text("gift_value").notNull(),
+  date: text("date").notNull(),
+});

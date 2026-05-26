@@ -126,6 +126,36 @@ export function PvPArena() {
       const res = await fetch("/api/pvp");
       if (!res.ok) return;
       const data = await res.json();
+      // 直接用 matchId 轮询单场状态
+      const pollRes = await fetch(`/api/pvp?matchId=${activeMatch.id}`);
+      if (!pollRes.ok) return;
+      const pollData = await pollRes.json();
+      if (!pollData.match) return;
+      const m = pollData.match;
+
+      // 比赛已结算
+      if (m.status === "completed") {
+        const resultData = m.result ? JSON.parse(m.result as string) : {};
+        setMatchResult({
+          winner: m.player2Name ?? m.player1Name,
+          winnerId: undefined,
+          prize: m.bet * 2 - 2,
+          message: JSON.stringify(resultData),
+          ...resultData,
+        });
+        setActiveMatch((prev) => prev ? { ...prev, status: "completed", player2Id: m.player2Id ?? prev.player2Id, result: m.result ?? prev.result } : null);
+        return;
+      }
+
+      // 对手加入 → status=playing
+      if (m.status === "playing" || m.player2Id) {
+        setActiveMatch((prev) => {
+          if (!prev) return null;
+          return { ...prev, player2Id: m.player2Id ?? prev.player2Id, result: m.result ?? prev.result, status: m.status ?? prev.status };
+        });
+        return;
+      }
+
       // 查最近完成的比赛有没有当前 matchId
       const done = (data.recent || []).find((m: RecentMatch) => m.id === activeMatch.id);
       if (done) {

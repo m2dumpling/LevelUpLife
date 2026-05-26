@@ -96,12 +96,33 @@ function generateMathProblem(): {
   return { a, b, op, answer };
 }
 
-// ── GET: 大厅数据 ──
+// ── GET: 大厅数据（支持 ?matchId= 单场查询）──
+
+function getMatchData(m: typeof schema.pvpMatch.$inferSelect) {
+  return {
+    id: m.id, type: m.type, bet: m.bet,
+    player1Id: m.player1Id, player2Id: m.player2Id,
+    status: m.status, result: m.result, createdAt: m.createdAt,
+    player1Name: getUserName(m.player1Id),
+    player2Name: m.player2Id ? getUserName(m.player2Id) : null,
+  };
+}
 
 export async function GET(request: Request) {
   try {
     const userId = getUserId(request);
     cleanupExpiredMatches();
+    const { searchParams } = new URL(request.url);
+    const matchIdParam = searchParams.get("matchId");
+
+    // 单场查询模式
+    if (matchIdParam) {
+      const match = db.select().from(schema.pvpMatch).where(eq(schema.pvpMatch.id, parseInt(matchIdParam))).get();
+      if (!match || (match.player1Id !== userId && match.player2Id !== userId)) {
+        return NextResponse.json({ error: "Match not found" }, { status: 404 });
+      }
+      return NextResponse.json({ match: getMatchData(match) });
+    }
 
     // 等待中的比赛
     const waitingMatches = db
@@ -143,13 +164,16 @@ export async function GET(request: Request) {
       createdAt: m.createdAt,
     }));
 
-    // 用户当前进行中的对决
+    // 用户当前的对决（等待中或进行中），不管是创建者还是加入者
     const activeMatch = db
       .select()
       .from(schema.pvpMatch)
-      .where(eq(schema.pvpMatch.status, "playing"))
       .all()
-      .find((m) => m.player1Id === userId || m.player2Id === userId);
+      .find(
+        (m) =>
+          (m.status === "waiting" || m.status === "playing") &&
+          (m.player1Id === userId || m.player2Id === userId)
+      );
 
     const activeData = activeMatch
       ? {

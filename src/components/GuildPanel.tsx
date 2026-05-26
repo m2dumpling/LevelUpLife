@@ -14,6 +14,9 @@ import {
   UserX,
   X,
   Swords,
+  Gift,
+  UserPlus,
+  Coins,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -78,6 +81,33 @@ export function GuildPanel({ onClose }: { onClose: () => void }) {
   const [chatMsg, setChatMsg] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
+
+  // 送礼
+  const [giftTarget, setGiftTarget] = useState<{ userId: number; username: string } | null>(null);
+  const [giftType, setGiftType] = useState<"gold" | "ore">("gold");
+  const [giftAmount, setGiftAmount] = useState("10");
+  const [giftOre, setGiftOre] = useState("ore_copper");
+  const [giftLoading, setGiftLoading] = useState(false);
+  const [giftMsg, setGiftMsg] = useState("");
+
+  const handleGift = (userId: number, username: string) => { setGiftTarget({ userId, username }); setGiftMsg(""); };
+  const handleAddFriend = async (friendId: number, username: string) => {
+    const res = await fetch("/api/friend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "add", friendId }) });
+    const data = await res.json();
+    setError(data.success ? `已添加 ${username} 为好友！` : (data.error || "添加失败"));
+    setTimeout(() => setError(""), 3000);
+  };
+
+  const doGift = async () => {
+    if (!giftTarget) return;
+    setGiftLoading(true);
+    const value = giftType === "gold" ? giftAmount : giftOre;
+    const res = await fetch("/api/guild/gift", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ toUserId: giftTarget.userId, giftType, giftValue: value }) });
+    const data = await res.json();
+    setGiftMsg(data.success ? data.message : (data.error || "送礼失败"));
+    setGiftLoading(false);
+    if (data.success) setTimeout(() => setGiftTarget(null), 1500);
+  };
 
   // 当前用户
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
@@ -498,6 +528,19 @@ export function GuildPanel({ onClose }: { onClose: () => void }) {
                     <span className="text-[10px] text-muted-foreground">
                       加入于 {m.joinedAt.slice(0, 10)}
                     </span>
+                    {/* 送礼物 + 加好友 (非本人) */}
+                    {m.userId !== currentUserId && (
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => handleGift(m.userId, m.username)}
+                          className="text-muted-foreground hover:text-amber-400 transition-colors" title="送礼物">
+                          <Gift className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => handleAddFriend(m.userId, m.username)}
+                          className="text-muted-foreground hover:text-emerald-400 transition-colors" title="加好友">
+                          <UserPlus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
                     {/* 会长踢人按钮 */}
                     {guildData.isLeader &&
                       m.userId !== guildData.guild.leaderId && (

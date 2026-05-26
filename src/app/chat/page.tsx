@@ -347,7 +347,7 @@ export default function ChatPage() {
               placeholder={replyTarget ? `回复 ${replyTarget.username}...` : "发送消息..."}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
               maxLength={500}
               style={{ fontSize: "16px" }}
               className="flex-1 bg-card border border-border rounded-lg px-3 py-2.5 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"

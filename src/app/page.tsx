@@ -18,6 +18,7 @@ import { LotteryButton } from "@/components/LotteryButton";
 import { MonthlyView } from "@/components/MonthlyView";
 import { PvPArena } from "@/components/PvPArena";
 import { GuildButton } from "@/components/GuildButton";
+import { FriendButton } from "@/components/FriendButton";
 import { WeatherBadge } from "@/components/WeatherBadge";
 import { VillageWidget } from "@/components/VillageWidget";
 import { useTasks } from "@/hooks/useTasks";
@@ -268,6 +269,7 @@ export default function HomePage() {
           <LotteryButton />
           <PvPArena />
           <GuildButton />
+          <FriendButton />
         </motion.div>
 
         <motion.section
