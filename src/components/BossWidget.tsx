@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skull, Swords, Trophy, Gift, X } from "lucide-react";
 
@@ -17,7 +17,7 @@ export function BossWidget() {
   const [boss, setBoss] = useState<BossData | null>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
-  const [prevDefeated, setPrevDefeated] = useState(false);
+  const celebratedRef = useRef(false);
 
   const fetchBoss = async () => {
     try {
@@ -25,21 +25,16 @@ export function BossWidget() {
       if (res.ok) {
         const data = await res.json();
         setBoss(data);
-        if (data.defeated && !prevDefeated) setCelebrate(true);
-        setPrevDefeated(data.defeated);
+        if (data.defeated && !celebratedRef.current) {
+          setCelebrate(true);
+          celebratedRef.current = true;
+        }
+        if (!data.defeated) celebratedRef.current = false;
       }
     } catch {}
   };
 
   useEffect(() => { fetchBoss(); const iv = setInterval(fetchBoss, 5000); return () => clearInterval(iv); }, []);
-
-  useEffect(() => {
-    if (celebrate) {
-      window.dispatchEvent(new CustomEvent("boss-defeated", { detail: boss }));
-      const t = setTimeout(() => setCelebrate(false), 5000);
-      return () => clearTimeout(t);
-    }
-  }, [celebrate, boss]);
 
   if (!boss) return null;
 
