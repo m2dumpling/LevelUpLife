@@ -97,7 +97,7 @@ export function BossWidget() {
         {boss.defeated ? (
           <div className="flex items-center gap-1.5 text-xs text-emerald-400"><Trophy className="w-3.5 h-3.5" /><span className="font-bold">已击败！奖励已发放</span></div>
         ) : (
-          <div className="text-[10px] text-muted-foreground">打卡造成伤害（琐碎1·简单2·中等4·困难8·史诗16）| 活跃用户 {boss.activeUsers}</div>
+          <div className="text-[10px] text-muted-foreground">打卡造成伤害（琐碎1·简单2·中等4·困难8·史诗16）</div>
         )}
 
         {boss.contributions.length > 0 && (
@@ -120,8 +120,7 @@ export function BossWidget() {
             </div>
             <div className="text-xs text-muted-foreground space-y-2">
               <p>每日 BOSS — 北京时间每天凌晨刷新</p>
-              <p>HP = 活跃用户(3日内登陆) × 20 + 随机值</p>
-              <p>当前活跃用户: {boss.activeUsers} 人</p>
+              <p>HP 根据社群活跃度动态生成</p>
               <p className="text-amber-400 font-bold">击败奖励: 每位参战者 ~{boss.reward?.gold || "?"} G</p>
               <div className="bg-muted/50 rounded-lg p-2 space-y-1">
                 <p className="text-foreground font-medium">伤害表</p>
