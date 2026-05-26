@@ -341,7 +341,7 @@ export function PvPArena({
   useEffect(() => {
     if (activeMatch && (view === "waiting" || submitted)) {
       fetchStatus();
-      statusPollRef.current = setInterval(fetchStatus, 2000);
+      statusPollRef.current = setInterval(fetchStatus, 500);
     }
     return () => {
       if (statusPollRef.current) {
@@ -811,7 +811,20 @@ export function PvPArena({
                   </span>
                 </div>
 
-                <div className="text-center py-6 space-y-3">
+                {(activeMatch.type === "math" && hasMathProblem) ? (
+                  <div className="text-center space-y-2 mb-3">
+                    <p className="text-xs text-muted-foreground">你的题目：</p>
+                    <p className="text-xl font-bold text-foreground">{String((mathProblem as any).a)} {String((mathProblem as any).op) === "+" ? "+" : "−"} {String((mathProblem as any).b)} = ?</p>
+                  </div>
+                ) : null}
+                {(activeMatch.type === "dice" && (mathProblem as any)?.player1Roll != null) ? (
+                  <div className="text-center space-y-2 mb-3">
+                    <p className="text-xs text-muted-foreground">你的骰子：</p>
+                    <p className="text-xl font-bold text-foreground">🎲 {String((mathProblem as any).player1Roll)}</p>
+                  </div>
+                ) : null}
+
+                <div className="text-center py-4 space-y-3">
                   <motion.div
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
