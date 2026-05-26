@@ -54,11 +54,37 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => { fetchGuild(); }, [fetchGuild]);
+
+  // 动态轮询: 活跃 2s, 非活跃 5s
   useEffect(() => {
     if (!guild?.guild) return;
+    const POLL_ACTIVE = 2000;
+    const POLL_INACTIVE = 5000;
+    let active = true;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const poll = () => {
+      fetchChat();
+      timer = setTimeout(poll, active ? POLL_ACTIVE : POLL_INACTIVE);
+    };
+
+    const onActive = () => { active = true; };
+    const onInactive = () => { active = false; };
+
+    document.addEventListener("visibilitychange", () => {
+      active = !document.hidden;
+    });
+    window.addEventListener("focus", onActive);
+    window.addEventListener("blur", onInactive);
+
     fetchChat();
-    const iv = setInterval(fetchChat, 4000);
-    return () => clearInterval(iv);
+    timer = setTimeout(poll, POLL_ACTIVE);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("focus", onActive);
+      window.removeEventListener("blur", onInactive);
+    };
   }, [guild?.guild, fetchChat]);
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 

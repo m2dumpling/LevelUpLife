@@ -60,13 +60,13 @@ export async function GET(request: Request) {
       .where(lt(schema.guildChat.createdAt, cutoff))
       .run();
 
-    // 获取最近 50 条消息
+    // 获取最近 100 条消息
     const messages = db
       .select()
       .from(schema.guildChat)
       .where(eq(schema.guildChat.guildId, membership.guildId))
       .orderBy(desc(schema.guildChat.createdAt))
-      .limit(50)
+      .limit(100)
       .all()
       .reverse(); // 正序返回
 
