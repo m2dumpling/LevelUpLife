@@ -17,7 +17,8 @@ export function BossWidget() {
   const [boss, setBoss] = useState<BossData | null>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
-  const celebratedRef = useRef(false);
+  const [celebrateBoss, setCelebrateBoss] = useState<BossData | null>(null);
+  const celebratedBossId = useRef(0);
 
   const fetchBoss = async () => {
     try {
@@ -25,15 +26,17 @@ export function BossWidget() {
       if (res.ok) {
         const data = await res.json();
         setBoss(data);
-        if (data.defeated && !celebratedRef.current) {
+        if (data.defeated && data.id !== celebratedBossId.current) {
+          setCelebrateBoss(data);
           setCelebrate(true);
-          celebratedRef.current = true;
+          celebratedBossId.current = data.id;
         }
-        if (!data.defeated) celebratedRef.current = false;
+        if (!data.defeated) celebratedBossId.current = 0;
       }
     } catch {}
   };
 
+  const dismiss = () => { setCelebrate(false); };
   useEffect(() => { fetchBoss(); const iv = setInterval(fetchBoss, 5000); return () => clearInterval(iv); }, []);
 
   if (!boss) return null;
@@ -47,11 +50,11 @@ export function BossWidget() {
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
           >
             <div className="bg-card border border-amber-500/30 rounded-2xl p-8 text-center space-y-3 shadow-2xl max-w-sm w-[calc(100%-2rem)]">
-              <div className="text-5xl">{boss.emoji}</div>
+              <div className="text-5xl">{celebrateBoss?.emoji || "🐉"}</div>
               <h2 className="text-2xl font-black text-amber-400">BOSS 被击败了！</h2>
-              <p className="text-sm text-muted-foreground">{boss.name} 已被 {boss.totalUsers} 名勇者联手击败</p>
-              <p className="text-amber-400 font-bold text-lg">🏆 每位参战者获得 {boss.reward?.gold || 80} G 奖励！</p>
-              <button onClick={() => setCelebrate(false)}
+              <p className="text-sm text-muted-foreground">{celebrateBoss?.name || ""} 已被 {celebrateBoss?.totalUsers || 0} 名勇者联手击败</p>
+              <p className="text-amber-400 font-bold text-lg">🏆 每位参战者获得 {celebrateBoss?.reward?.gold || 80} G 奖励！</p>
+              <button onClick={dismiss}
                 className="mt-3 px-6 py-2 bg-amber-500/20 text-amber-400 rounded-lg font-bold hover:bg-amber-500/30 transition-colors">
                 知道了
               </button>
