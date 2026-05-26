@@ -47,7 +47,19 @@ export default function PmPage() {
 
   const loadMessages = useCallback(async (friendId: number) => {
     const r = await fetch(`/api/friend?action=messages&friendId=${friendId}`);
-    if (r.ok) setMessages(await r.json());
+    if (r.ok) {
+      const msgs: ChatMessage[] = await r.json();
+      setMessages(msgs);
+      if (msgs.length > 0) {
+        const lastSeen: Record<string, string> = {};
+        try {
+          const raw = localStorage.getItem("last_friend_msg_ids") || "";
+          for (const part of raw.split(",")) { const [f, m] = part.split(":"); if (f && m) lastSeen[f] = m; }
+        } catch {}
+        lastSeen[String(friendId)] = String(msgs[msgs.length - 1].id);
+        localStorage.setItem("last_friend_msg_ids", Object.entries(lastSeen).map(([f, m]) => `${f}:${m}`).join(","));
+      }
+    }
   }, []);
 
   useEffect(() => {

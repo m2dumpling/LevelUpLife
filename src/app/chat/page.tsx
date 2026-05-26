@@ -87,7 +87,11 @@ export default function ChatPage() {
 
   const fetchChat = useCallback(async () => {
     const r = await fetch("/api/guild/chat");
-    if (r.ok) setMessages((await r.json()).messages || []);
+    if (r.ok) {
+      const msgs = (await r.json()).messages || [];
+      setMessages(msgs);
+      if (msgs.length > 0) localStorage.setItem("last_guild_msg_id", String(msgs[msgs.length - 1].id));
+    }
   }, []);
 
   useEffect(() => { fetchGuild(); }, [fetchGuild]);

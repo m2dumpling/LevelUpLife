@@ -195,33 +195,23 @@ export default function HomePage() {
   }, [refreshStats]);
 
   // 通知轮询
-  const [guildBadge, setGuildBadge] = useState(0);
-  const [friendBadge, setFriendBadge] = useState(0);
+  const [guildBlink, setGuildBlink] = useState(false);
+  const [friendBlink, setFriendBlink] = useState(false);
   useEffect(() => {
     const poll = async () => {
       try {
-        const [gRes, fRes] = await Promise.all([fetch("/api/guild"), fetch("/api/friend?action=requests")]);
-        if (gRes.ok) {
-          const g = await gRes.json();
-          if (g.guild) {
-            // Count messages since last check
-            const lastGuildMsg = parseInt(localStorage.getItem("last_guild_msg") || "0");
-            const chatRes = await fetch("/api/guild/chat");
-            if (chatRes.ok) {
-              const msgs = await chatRes.json();
-              const newMsgs = msgs.filter((m: any) => m.id > lastGuildMsg && m.userId !== (g as any).myUserId);
-              setGuildBadge(newMsgs.length);
-            }
-          }
-        }
-        if (fRes.ok) {
-          const reqs = await fRes.json();
-          setFriendBadge(reqs.length);
+        const lastGuildId = parseInt(localStorage.getItem("last_guild_msg_id") || "0");
+        const lastFriendIds = localStorage.getItem("last_friend_msg_ids") || "";
+        const res = await fetch(`/api/notifications?afterGuildId=${lastGuildId}&afterFriendIds=${encodeURIComponent(lastFriendIds)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setGuildBlink(data.guildUnread > 0);
+          setFriendBlink((Object.values(data.friendUnread) as number[]).some((v) => v > 0) || data.requestsCount > 0);
         }
       } catch {}
     };
     poll();
-    const iv = setInterval(poll, 15000);
+    const iv = setInterval(poll, 5000);
     return () => clearInterval(iv);
   }, []);
 
@@ -328,7 +318,7 @@ export default function HomePage() {
       <Sidebar
         items={SIDEBAR_ITEMS.map(item => ({
           ...item,
-          blink: (item.id === "guild" && guildBadge > 0) || (item.id === "friends" && friendBadge > 0),
+          blink: (item.id === "guild" && guildBlink) || (item.id === "friends" && friendBlink),
         }))}
         activePanel={activePanel}
         onPanelClick={handlePanelClick}
