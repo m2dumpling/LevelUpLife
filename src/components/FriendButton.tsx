@@ -34,12 +34,14 @@ export function FriendButton({ open: controlledOpen, onOpenChange }: FriendButto
 
   const loadUnread = async () => {
     try {
-      const lastFriendIds = localStorage.getItem("last_friend_msg_ids") || "";
-      const res = await fetch(`/api/notifications?afterFriendIds=${encodeURIComponent(lastFriendIds)}`);
+      const lastFriendCheck = parseInt(localStorage.getItem("last_friend_check") || "0");
+      const res = await fetch(`/api/notifications?after=${lastFriendCheck}`);
       if (res.ok) {
         const data = await res.json();
         setUnreadCounts(data.friendUnread || {});
       }
+      // Mark as read: update timestamp to now
+      localStorage.setItem("last_friend_check", String(Date.now()));
     } catch {}
   };
 
@@ -58,7 +60,7 @@ export function FriendButton({ open: controlledOpen, onOpenChange }: FriendButto
   };
 
   useEffect(() => { loadData(); }, []);
-  useEffect(() => { if (isControlled && open) loadData(); }, [isControlled, open]);
+  useEffect(() => { if (isControlled && open) { loadData(); loadUnread(); } }, [isControlled, open]);
 
   const handleSearch = async (q: string) => {
     setAddFriendName(q);

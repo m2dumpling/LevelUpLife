@@ -201,8 +201,8 @@ export default function HomePage() {
     const poll = async () => {
       try {
         const lastGuildId = parseInt(localStorage.getItem("last_guild_msg_id") || "0");
-        const lastFriendIds = localStorage.getItem("last_friend_msg_ids") || "";
-        const res = await fetch(`/api/notifications?afterGuildId=${lastGuildId}&afterFriendIds=${encodeURIComponent(lastFriendIds)}`);
+        const lastFriendCheck = parseInt(localStorage.getItem("last_friend_check") || "0");
+        const res = await fetch(`/api/notifications?afterGuildId=${lastGuildId}&after=${lastFriendCheck}`);
         if (res.ok) {
           const data = await res.json();
           setGuildBlink(data.guildUnread > 0);

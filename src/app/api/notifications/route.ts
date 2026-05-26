@@ -8,39 +8,40 @@ export async function GET(request: Request) {
     const userId = getUserId(request);
     const { searchParams } = new URL(request.url);
     const afterGuildId = parseInt(searchParams.get("afterGuildId") || "0");
-    const afterFriendIds = searchParams.get("afterFriendIds") || "";
-
-    // Parse per-friend last seen IDs: "friendId:lastMsgId,friendId:lastMsgId"
-    const friendLastSeen: Record<number, number> = {};
-    for (const part of afterFriendIds.split(",").filter(Boolean)) {
-      const [fid, mid] = part.split(":").map(Number);
-      if (fid && mid) friendLastSeen[fid] = mid;
-    }
+    const afterTimestamp = parseInt(searchParams.get("after") || "0");
 
     // Guild unread
     let guildUnread = 0;
     const guildMember = db.select().from(schema.guildMember).where(eq(schema.guildMember.userId, userId)).get();
-    if (guildMember && afterGuildId > 0) {
-      const newMsgs = db.select().from(schema.guildChat)
-        .where(and(eq(schema.guildChat.guildId, guildMember.guildId), gt(schema.guildChat.id, afterGuildId), ne(schema.guildChat.userId, userId)))
-        .all();
-      guildUnread = newMsgs.length;
-    } else if (guildMember && afterGuildId === 0) {
-      // First time — count all
-      guildUnread = 0;
+    if (guildMember) {
+      if (afterGuildId > 0) {
+        const newMsgs = db.select().from(schema.guildChat)
+          .where(and(eq(schema.guildChat.guildId, guildMember.guildId), gt(schema.guildChat.id, afterGuildId), ne(schema.guildChat.userId, userId)))
+          .all();
+        guildUnread = newMsgs.length;
+      } else {
+        // First time: count all from others in the last 24h
+        const oneDayAgo = new Date(Date.now() - 86400000).toISOString();
+        guildUnread = db.select().from(schema.guildChat)
+          .where(and(eq(schema.guildChat.guildId, guildMember.guildId), ne(schema.guildChat.userId, userId), gt(schema.guildChat.createdAt, oneDayAgo)))
+          .all().length;
+      }
     }
 
-    // Friend unread per friend
+    // Friend unread: count ALL messages from ANY friend sent after last check timestamp
     const friendUnread: Record<number, number> = {};
-    for (const [friendId, lastId] of Object.entries(friendLastSeen)) {
-      if (lastId === 0) continue;
-      const count = db.select().from(schema.friendChat)
-        .where(and(
-          eq(schema.friendChat.friendId, userId),
-          eq(schema.friendChat.userId, Number(friendId)),
-          gt(schema.friendChat.id, lastId)
+    const friends = db.select({ friendId: schema.friend.friendId, note: schema.friend.note })
+      .from(schema.friend).where(eq(schema.friend.userId, userId)).all();
+
+    if (afterTimestamp > 0) {
+      // Count messages from each friend sent after the timestamp
+      for (const f of friends) {
+        const count = db.select().from(schema.friendChat).where(and(
+          eq(schema.friendChat.userId, f.friendId), eq(schema.friendChat.friendId, userId),
+          gt(schema.friendChat.id, afterTimestamp)
         )).all().length;
-      friendUnread[Number(friendId)] = count;
+        if (count > 0) friendUnread[f.friendId] = count;
+      }
     }
 
     // Friend requests count
@@ -53,3 +54,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ guildUnread: 0, friendUnread: {}, requestsCount: 0 });
   }
 }
+
