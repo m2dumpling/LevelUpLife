@@ -533,11 +533,11 @@ export function GuildPanel({ onClose }: { onClose: () => void }) {
                       <div className="flex items-center gap-1">
                         <button onClick={() => handleGift(m.userId, m.username)}
                           className="text-muted-foreground hover:text-amber-400 transition-colors" title="送礼物">
-                          <Gift className="w-3.5 h-3.5" />
+                          <Gift className="w-5 h-5" />
                         </button>
                         <button onClick={() => handleAddFriend(m.userId, m.username)}
                           className="text-muted-foreground hover:text-emerald-400 transition-colors" title="加好友">
-                          <UserPlus className="w-3.5 h-3.5" />
+                          <UserPlus className="w-5 h-5" />
                         </button>
                       </div>
                     )}
@@ -575,6 +575,45 @@ export function GuildPanel({ onClose }: { onClose: () => void }) {
             </div>
           )}
         </>
+      )}
+
+      {/* 送礼弹窗 */}
+      {giftTarget && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60" onClick={() => setGiftTarget(null)}>
+          <div onClick={e => e.stopPropagation()} className="bg-card border border-border rounded-xl p-5 w-[calc(100%-2rem)] max-w-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-foreground flex items-center gap-2">
+                <Gift className="w-4 h-4 text-amber-400" />送礼给 {giftTarget.username}
+              </h3>
+              <button onClick={() => setGiftTarget(null)}><X className="w-4 h-4" /></button>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setGiftType("gold")} className={`flex-1 py-2 rounded-lg text-sm font-bold ${giftType === "gold" ? "bg-amber-500/20 text-amber-400 border border-amber-500/30" : "bg-muted/50 text-muted-foreground"}`}>
+                <Coins className="w-4 h-4 mx-auto mb-0.5" />金币
+              </button>
+              <button onClick={() => setGiftType("ore")} className={`flex-1 py-2 rounded-lg text-sm font-bold ${giftType === "ore" ? "bg-amber-500/20 text-amber-400 border border-amber-500/30" : "bg-muted/50 text-muted-foreground"}`}>
+                🪨 矿石
+              </button>
+            </div>
+            {giftType === "gold" ? (
+              <input type="number" value={giftAmount} onChange={e => setGiftAmount(e.target.value)} min="1"
+                className="w-full px-3 py-1.5 bg-muted/50 border border-border rounded-md text-sm text-center" />
+            ) : (
+              <select value={giftOre} onChange={e => setGiftOre(e.target.value)}
+                className="w-full px-3 py-1.5 bg-muted/50 border border-border rounded-md text-sm">
+                <option value="ore_copper">🪨 铜矿石</option>
+                <option value="ore_iron">⛏️ 铁矿石</option>
+                <option value="ore_gold">✨ 金矿石</option>
+                <option value="ore_mithril">💎 秘银矿石</option>
+                <option value="ore_adamantite">🔮 精金矿石</option>
+              </select>
+            )}
+            {giftMsg && <p className="text-xs text-emerald-400 text-center">{giftMsg}</p>}
+            <Button onClick={doGift} disabled={giftLoading} className="w-full">
+              {giftLoading ? "送出中..." : "送出礼物"}
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );
