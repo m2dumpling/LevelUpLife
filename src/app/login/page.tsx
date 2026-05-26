@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 
   const syncPassword = () => {
@@ -23,8 +24,9 @@ export default function LoginPage() {
 
   const handleSubmit = async (e?: React.FormEvent | React.KeyboardEvent) => {
     if (e && "preventDefault" in e) e.preventDefault();
+    const realUsername = usernameRef.current?.value ?? username;
     const realPassword = passwordRef.current?.value ?? password;
-    if (!username.trim() || !realPassword.trim()) return;
+    if (!realUsername.trim() || !realPassword.trim()) return;
 
     setLoading(true);
     setError("");
@@ -34,7 +36,7 @@ export default function LoginPage() {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim(), password: realPassword }),
+        body: JSON.stringify({ username: realUsername.trim(), password: realPassword }),
       });
 
       if (res.ok) {
@@ -53,8 +55,14 @@ export default function LoginPage() {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      syncPassword();
-      handleSubmit();
+      if (e.currentTarget === usernameRef.current) {
+        // 用户名回车 → 跳到密码框
+        e.preventDefault();
+        passwordRef.current?.focus();
+      } else {
+        syncPassword();
+        handleSubmit();
+      }
     }
   };
 
@@ -87,10 +95,12 @@ export default function LoginPage() {
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
+              ref={usernameRef}
               type="text"
               placeholder="用户名"
               value={username}
               onChange={(e) => { setUsername(e.target.value); setError(""); }}
+              onKeyDown={handleKeyDown}
               className="w-full pl-10 pr-4 py-3 bg-card border-2 border-border rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
               autoFocus autoComplete="username"
             />
