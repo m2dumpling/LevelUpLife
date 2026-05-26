@@ -757,18 +757,20 @@ export function PvPArena({
   return (
     <>
       <Dialog open={open} onOpenChange={handleDialogClose}>
-        <DialogTrigger
-          render={
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg shadow-orange-600/20 transition-all"
-            >
-              <Swords className="w-4 h-4" />
-              PvP 竞技场
-            </motion.button>
+        {!isControlled && (
+          <DialogTrigger
+            render={
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg shadow-orange-600/20 transition-all"
+              >
+                <Swords className="w-4 h-4" />
+                PvP 竞技场
+              </motion.button>
           }
         />
+        )}
 
         <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto bg-gradient-to-b from-gray-900 to-gray-950 border-gray-800 text-gray-100 p-0 gap-0">
           <div className="sticky top-0 z-10 bg-gray-900/95 backdrop-blur border-b border-gray-800 px-6 py-4">
