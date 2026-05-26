@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Users, X, UserPlus, Check, XCircle, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface Friend { id: number; username: string; name: string; level: number; }
+interface Friend { id: number; username: string; name: string; level: number; note?: string | null; }
 interface FriendRequest { id: number; fromUserId: number; username: string; name: string; level: number; createdAt: string; }
 
 interface FriendButtonProps {
@@ -28,6 +28,16 @@ export function FriendButton({ open: controlledOpen, onOpenChange }: FriendButto
   const [addSuccess, setAddSuccess] = useState("");
   const [searchResults, setSearchResults] = useState<Friend[]>([]);
   const [searching, setSearching] = useState(false);
+  const [noteTarget, setNoteTarget] = useState<Friend | null>(null);
+  const [noteText, setNoteText] = useState("");
+
+  const handleNoteEdit = (f: Friend) => { setNoteTarget(f); setNoteText(f.note || ""); };
+  const saveNote = async () => {
+    if (!noteTarget) return;
+    await fetch("/api/friend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "note", friendId: noteTarget.id, note: noteText }) });
+    setNoteTarget(null);
+    loadData();
+  };
 
   const loadData = async () => {
     const [fRes, rRes] = await Promise.all([fetch("/api/friend"), fetch("/api/friend?action=requests")]);
@@ -148,15 +158,24 @@ export function FriendButton({ open: controlledOpen, onOpenChange }: FriendButto
                 ) : (
                   friends.map(f => (
                     <div key={f.id} className="flex items-center justify-between p-2.5 rounded-lg border border-border hover:bg-accent/30 transition-colors mb-1">
-                      <div className="flex items-center gap-2 cursor-pointer"
+                      <div className="flex-1 cursor-pointer min-w-0"
                         onClick={() => { setOpen(false); router.push("/pm?friend=" + f.id); }}>
-                        <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                        <div>
-                          <span className="text-sm font-medium text-foreground">{f.name || f.username}</span>
-                          <span className="text-[10px] text-muted-foreground ml-2">Lv.{f.level}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                          <span className="text-sm font-medium text-foreground truncate">
+                            {f.name || f.username}
+                            {f.note && <span className="text-[10px] text-muted-foreground ml-1">({f.note})</span>}
+                          </span>
                         </div>
+                        <div className="text-[10px] text-muted-foreground ml-4">Lv.{f.level}</div>
                       </div>
-                      <button onClick={() => removeFriend(f.id)} className="text-[10px] text-red-400 hover:underline">删除</button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button onClick={(e) => { e.stopPropagation(); handleNoteEdit(f); }}
+                          className="text-[10px] text-muted-foreground hover:text-amber-400 px-1" title="备注">
+                          ✏️
+                        </button>
+                        <button onClick={() => removeFriend(f.id)} className="text-[10px] text-red-400 hover:underline">删除</button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -167,6 +186,23 @@ export function FriendButton({ open: controlledOpen, onOpenChange }: FriendButto
               <Button variant="ghost" size="sm" onClick={() => router.push("/pm")} className="w-full justify-center text-emerald-400">
                 打开私聊大厅 →
               </Button>
+
+              {/* Note dialog */}
+              {noteTarget && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60" onClick={() => setNoteTarget(null)}>
+                  <div onClick={e => e.stopPropagation()} className="bg-card border border-border rounded-xl p-5 w-[calc(100%-2rem)] max-w-xs space-y-3">
+                    <h3 className="font-bold text-foreground text-sm">备注 {noteTarget.name || noteTarget.username}</h3>
+                    <input value={noteText} onChange={e => setNoteText(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && saveNote()}
+                      placeholder="真实姓名或备注..." autoFocus
+                      className="w-full px-3 py-2 bg-muted/50 border border-border rounded-md text-sm" />
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => setNoteTarget(null)} className="flex-1">取消</Button>
+                      <Button onClick={saveNote} className="flex-1">保存</Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

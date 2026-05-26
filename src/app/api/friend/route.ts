@@ -13,6 +13,7 @@ export async function GET(request: Request) {
     if (action === "list") {
       const friends = db.select({
         id: schema.user.id, username: schema.user.username, name: schema.user.name, level: schema.user.level,
+        note: schema.friend.note,
       }).from(schema.friend).innerJoin(schema.user, eq(schema.friend.friendId, schema.user.id))
         .where(eq(schema.friend.userId, userId)).all();
       return NextResponse.json(friends);
