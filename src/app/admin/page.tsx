@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Shield, Search, Trash2, Users, ChevronDown, ChevronRight, Activity, Globe, Download, Ban, AlertTriangle, BarChart3, TrendingUp } from "lucide-react";
+import { Shield, Search, Trash2, Users, ChevronDown, ChevronRight, Activity, Globe, Download, Ban, AlertTriangle, BarChart3, TrendingUp, Database } from "lucide-react";
 
 interface UserRow {
   id: number; username: string; name: string; role: string; banned: boolean;
@@ -88,7 +88,8 @@ export default function AdminPage() {
             <span className="text-sm font-bold text-foreground">管理员面板</span>
           </div>
           <div className="flex items-center gap-3">
-            <a href="/api/admin/backup" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"><Download className="w-3 h-3" />备份数据库</a>
+            <a href="/admin/db" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"><Database className="w-3 h-3" />数据库</a>
+            <a href="/api/admin/backup" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"><Download className="w-3 h-3" />备份</a>
             <a href="/" className="text-xs text-muted-foreground hover:text-foreground">← 返回游戏</a>
           </div>
         </div>
