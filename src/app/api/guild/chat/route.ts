@@ -81,7 +81,7 @@ export async function POST(request: Request) {
   try {
     const userId = getUserId(request);
     const body = await request.json();
-    const { message } = body;
+    const { message, replyTo } = body;
 
     if (!message || typeof message !== "string" || message.trim().length === 0) {
       return NextResponse.json({ error: "消息不能为空" }, { status: 400 });
@@ -110,6 +110,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "用户不存在" }, { status: 400 });
     }
 
+    // 处理回复
+    let replyUsername: string | null = null;
+    let replyPreview: string | null = null;
+    if (replyTo && typeof replyTo === "number") {
+      const repliedMsg = db
+        .select()
+        .from(schema.guildChat)
+        .where(eq(schema.guildChat.id, replyTo))
+        .get();
+      if (repliedMsg) {
+        replyUsername = repliedMsg.username;
+        replyPreview = repliedMsg.message.slice(0, 50);
+      }
+    }
+
     const now = new Date().toISOString();
     const chatEntry = db
       .insert(schema.guildChat)
@@ -118,6 +133,9 @@ export async function POST(request: Request) {
         userId,
         username: user.username,
         message: message.trim(),
+        replyTo: replyTo || null,
+        replyUsername,
+        replyPreview,
         createdAt: now,
       })
       .returning()

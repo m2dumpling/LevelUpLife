@@ -99,6 +99,8 @@ export function PvPArena() {
   // Dice animation
   const [diceRolling, setDiceRolling] = useState(false);
 
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const matchPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -158,12 +160,19 @@ export function PvPArena() {
   useEffect(() => {
     if (open) {
       fetchLobby();
-      pollRef.current = setInterval(fetchLobby, 3000);
+      pollRef.current = setInterval(fetchLobby, 1500);
     }
     return () => {
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
     };
   }, [open, fetchLobby]);
+
+  // 获取当前用户 ID
+  useEffect(() => {
+    if (open) {
+      fetch("/api/user").then(r => r.json()).then(u => setCurrentUserId(u.id)).catch(() => {});
+    }
+  }, [open]);
 
   // 活跃对决轮询
   useEffect(() => {
@@ -222,6 +231,10 @@ export function PvPArena() {
       });
       const data = await res.json();
       if (!res.ok) {
+        // 对决已被取消 → 立即从本地列表移除
+        if (res.status === 404) {
+          setWaiting((prev) => prev.filter((m) => m.id !== matchId));
+        }
         alert(data.error || "加入失败");
         return;
       }
@@ -315,11 +328,10 @@ export function PvPArena() {
   const getMathProblem = () => {
     if (!activeMatch?.result) return null;
     try {
-      const p = JSON.parse(activeMatch.result as string);
-      if (p.a !== undefined && p.b !== undefined && p.op) return p;
-    } catch {
-      // ignore
-    }
+      const raw = typeof activeMatch.result === "string" ? activeMatch.result : JSON.stringify(activeMatch.result);
+      const p = JSON.parse(raw);
+      if (p.a !== undefined && p.b !== undefined && p.op && !p.resolved) return p;
+    } catch { /* ignore */ }
     return null;
   };
 
@@ -575,7 +587,9 @@ export function PvPArena() {
                   <div className="text-center space-y-2">
                     <Trophy className="w-8 h-8 text-yellow-400 mx-auto" />
                     <p className="text-lg font-bold text-yellow-300">
-                      {matchResult.winner} 获胜！
+                      {currentUserId && matchResult.winnerId === currentUserId
+                        ? "🎉 你赢了！"
+                        : `💀 你输了，${matchResult.winner} 获胜`}
                     </p>
                     {matchResult.prize !== undefined && (
                       <p className="text-sm text-gray-300">
@@ -910,7 +924,7 @@ export function PvPArena() {
             {/* 底部提示 */}
             {!activeMatch && !matchResult && (
               <p className="text-center text-[10px] text-gray-600 pt-2">
-                数据每 3 秒自动刷新 · 平局无税收
+                数据每 1.5 秒自动刷新 · 平局无税收
               </p>
             )}
           </div>

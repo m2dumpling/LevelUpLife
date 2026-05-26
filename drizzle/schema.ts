@@ -211,6 +211,9 @@ export const guildChat = sqliteTable("guild_chat", {
   userId: integer("user_id").notNull(),
   username: text("username").notNull(),
   message: text("message").notNull(),
+  replyTo: integer("reply_to"),
+  replyUsername: text("reply_username"),
+  replyPreview: text("reply_preview"),
   createdAt: text("created_at").notNull(),
 });
 
