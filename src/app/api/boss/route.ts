@@ -44,10 +44,11 @@ function spawnBoss() {
 
   const bossDef = BOSS_NAMES[Math.floor(Math.random() * BOSS_NAMES.length)];
   const activeUsers = Math.max(1, countActiveUsers());
-  // HP = activeUsers * 20 + random(50) — so 10 users ≈ 250HP, 20 users ≈ 450HP
   const maxHp = activeUsers * 20 + Math.floor(Math.random() * 50);
+  const rewardGold = 50 + Math.floor(Math.random() * 100);
   const boss = db.insert(schema.boss).values({
     name: bossDef.name, emoji: bossDef.emoji, hp: maxHp, maxHp, weekStart: today, defeated: false,
+    rewardGold,
   }).returning().get();
   return boss;
 }
@@ -73,6 +74,11 @@ export async function GET(request: Request) {
     const totalUsers = contributions.length;
     const totalDamage = contributions.reduce((s, c) => s + Number(c.damage), 0);
 
+    // 如果击败了且未通知过，标记已通知
+    if (boss.defeated && !boss.notified) {
+      db.update(schema.boss).set({ notified: true }).where(eq(schema.boss.id, boss.id)).run();
+    }
+
     return NextResponse.json({
       ...boss,
       contributions,
@@ -81,8 +87,8 @@ export async function GET(request: Request) {
       hpPercent: Math.max(0, Math.round((boss.hp / boss.maxHp) * 100)),
       dayEnd: getToday(),
       activeUsers: countActiveUsers(),
-      reward: { gold: 50 + Math.floor(Math.random() * 100), description: "击败BOSS所有参战者瓜分金币奖励" },
-      damageTable: { trivial: 1, easy: 2, medium: 4, hard: 8, heroic: 16 },
+      reward: { gold: boss.rewardGold || 80, description: "击败BOSS所有参战者瓜分金币奖励" },
+      damageTable: DAMAGE_PER_DIFFICULTY,
     });
   } catch (e) {
     return NextResponse.json({ error: "获取BOSS信息失败" }, { status: 500 });
@@ -126,11 +132,12 @@ export async function checkBossDefeatedReward(): Promise<string | null> {
     .where(eq(schema.bossContribution.bossId, boss.id))
     .all();
 
+  const rewardGold = boss.rewardGold || 80;
   const rewarded = new Set<number>();
   for (const c of contributed) {
     if (rewarded.has(c.userId)) continue;
     rewarded.add(c.userId);
-    const reward = 50 + Math.floor(Math.random() * 100);
+    const reward = rewardGold;
     db.update(schema.user)
       .set({ gold: sql`${schema.user.gold} + ${reward}` })
       .where(eq(schema.user.id, c.userId))

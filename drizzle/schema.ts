@@ -146,6 +146,8 @@ export const boss = sqliteTable("boss", {
   maxHp: integer("max_hp").notNull(),
   weekStart: text("week_start").notNull(),
   defeated: integer("defeated", { mode: "boolean" }).notNull().default(false),
+  rewardGold: integer("reward_gold"),
+  notified: integer("notified", { mode: "boolean" }).notNull().default(false),
 });
 
 // ── BOSS 贡献记录 ──
