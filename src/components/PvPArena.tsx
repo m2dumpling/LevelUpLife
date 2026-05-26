@@ -325,14 +325,38 @@ export function PvPArena() {
 
   const mathProblem = getMathProblem();
 
-  // ── 离开对决 ──
-  const handleLeave = () => {
+  // ── 离开/取消对决 ──
+  const handleLeave = async () => {
+    // 如果是等待中的对决且是创建者 → 取消并退款
+    if (activeMatch && !activeMatch.player2Id && activeMatch.status === "waiting") {
+      await fetch("/api/pvp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "cancel", matchId: activeMatch.id }),
+      });
+    }
     setActiveMatch(null);
     setMatchResult(null);
     setRpsMove(null);
     setRpsSubmitted(false);
     setMathAnswer("");
     fetchLobby();
+  };
+
+  // ── 放弃对决 ──
+  const handleForfeit = async () => {
+    if (!activeMatch) return;
+    const res = await fetch("/api/pvp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "forfeit", matchId: activeMatch.id }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setMatchResult(data.result);
+      setActiveMatch((prev) => prev ? { ...prev, status: "completed" } : null);
+      if (data.newGold !== undefined) window.dispatchEvent(new Event("task-completed"));
+    }
   };
 
   // ── 格式化时间 ──
@@ -349,7 +373,25 @@ export function PvPArena() {
   return (
     <>
       {/* ── 触发按钮 ── */}
-      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) handleLeave(); }}>
+      <Dialog open={open} onOpenChange={async (v) => {
+        if (!v && activeMatch && !activeMatch.player2Id && activeMatch.status === "waiting") {
+          // 关闭对话框时自动取消等待中的对决
+          await fetch("/api/pvp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "cancel", matchId: activeMatch.id }),
+          });
+          window.dispatchEvent(new Event("task-completed"));
+        }
+        setOpen(v);
+        if (!v) {
+          setActiveMatch(null);
+          setMatchResult(null);
+          setRpsMove(null);
+          setRpsSubmitted(false);
+          setMathAnswer("");
+        }
+      }}>
         <DialogTrigger
           render={
             <motion.button
@@ -402,7 +444,13 @@ export function PvPArena() {
                       ⏳
                     </motion.div>
                     <p className="text-sm text-gray-300">等待对手加入...</p>
-                    <p className="text-xs text-gray-500">对决已创建，等待其他冒险者挑战</p>
+                    <p className="text-xs text-gray-500">5 分钟后无人加入将自动取消</p>
+                    <button
+                      onClick={handleLeave}
+                      className="text-xs text-red-400/70 hover:text-red-400 transition-colors py-1"
+                    >
+                      取消对决（退还 {activeMatch.bet}G）
+                    </button>
                   </div>
                 )}
 
@@ -493,12 +541,22 @@ export function PvPArena() {
                   </div>
                 )}
 
-                <button
-                  onClick={handleLeave}
-                  className="w-full text-xs text-gray-500 hover:text-gray-300 transition-colors py-1"
-                >
-                  离开对决
-                </button>
+                <div className="flex gap-2 pt-2">
+                  {activeMatch.player2Id && (
+                    <button
+                      onClick={handleForfeit}
+                      className="flex-1 text-xs text-red-400/60 hover:text-red-400 transition-colors py-1"
+                    >
+                      放弃对决
+                    </button>
+                  )}
+                  <button
+                    onClick={handleLeave}
+                    className="flex-1 text-xs text-gray-500 hover:text-gray-300 transition-colors py-1"
+                  >
+                    离开
+                  </button>
+                </div>
               </motion.div>
             )}
 

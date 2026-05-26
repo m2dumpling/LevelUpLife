@@ -5,7 +5,27 @@ import { getUserId } from "@/lib/auth";
 import { checkRate } from "@/lib/rate-limiter";
 import { getTodayLocal } from "@/lib/date-utils";
 
-const TAX = 2; // 每场对战税收 2G
+const TAX = 2;
+const MATCH_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+
+// ── 过期清理 ──
+function cleanupExpiredMatches(): void {
+  const cutoff = new Date(Date.now() - MATCH_EXPIRY_MS).toISOString();
+  const expired = db
+    .select()
+    .from(schema.pvpMatch)
+    .where(eq(schema.pvpMatch.status, "waiting"))
+    .all()
+    .filter((m) => m.createdAt < cutoff);
+
+  for (const m of expired) {
+    addGold(m.player1Id, m.bet);
+    db.update(schema.pvpMatch)
+      .set({ status: "cancelled" })
+      .where(eq(schema.pvpMatch.id, m.id))
+      .run();
+  }
+}
 
 // ── 工具函数 ──
 
@@ -81,6 +101,7 @@ function generateMathProblem(): {
 export async function GET(request: Request) {
   try {
     const userId = getUserId(request);
+    cleanupExpiredMatches();
 
     // 等待中的比赛
     const waitingMatches = db
@@ -174,6 +195,24 @@ export async function POST(request: Request) {
       const rate = checkRate(userId, "pvp_match", 10);
       if (!rate.allowed) {
         return NextResponse.json({ error: rate.message }, { status: 429 });
+      }
+
+      // 检查是否已有等待中的对决（每人同时只能有一个）
+      const existing = db
+        .select()
+        .from(schema.pvpMatch)
+        .where(
+          and(
+            eq(schema.pvpMatch.player1Id, userId),
+            eq(schema.pvpMatch.status, "waiting")
+          )
+        )
+        .get();
+      if (existing) {
+        return NextResponse.json(
+          { error: "你已有一个等待中的对决，请先取消或等待对手加入" },
+          { status: 400 }
+        );
       }
 
       // 检查金币
@@ -624,6 +663,89 @@ export async function POST(request: Request) {
         { error: "无效的游戏类型" },
         { status: 400 }
       );
+    }
+
+    // ── action: cancel（创建者取消等待中的对决，退款）──
+    if (action === "cancel") {
+      const { matchId } = body;
+      if (!matchId) {
+        return NextResponse.json({ error: "缺少 matchId" }, { status: 400 });
+      }
+      const match = db
+        .select()
+        .from(schema.pvpMatch)
+        .where(
+          and(
+            eq(schema.pvpMatch.id, matchId),
+            eq(schema.pvpMatch.status, "waiting")
+          )
+        )
+        .get();
+
+      if (!match) {
+        return NextResponse.json({ error: "对决不存在或已开始" }, { status: 404 });
+      }
+      if (match.player1Id !== userId) {
+        return NextResponse.json({ error: "只有创建者可以取消对决" }, { status: 403 });
+      }
+
+      addGold(userId, match.bet);
+      db.update(schema.pvpMatch)
+        .set({ status: "cancelled" })
+        .where(eq(schema.pvpMatch.id, matchId))
+        .run();
+
+      return NextResponse.json({ success: true, refund: match.bet, newGold: getUserGold(userId) });
+    }
+
+    // ── action: forfeit（放弃进行中的对决，对手获胜）──
+    if (action === "forfeit") {
+      const { matchId } = body;
+      if (!matchId) {
+        return NextResponse.json({ error: "缺少 matchId" }, { status: 400 });
+      }
+      const match = db
+        .select()
+        .from(schema.pvpMatch)
+        .where(
+          and(
+            eq(schema.pvpMatch.id, matchId),
+            eq(schema.pvpMatch.status, "playing")
+          )
+        )
+        .get();
+
+      if (!match) {
+        return NextResponse.json({ error: "对决不存在或已结束" }, { status: 404 });
+      }
+      if (match.player1Id !== userId && match.player2Id !== userId) {
+        return NextResponse.json({ error: "你不是该对决的参与者" }, { status: 403 });
+      }
+
+      const opponentId = match.player1Id === userId ? match.player2Id! : match.player1Id;
+      const pot = match.bet * 2;
+      const prize = pot - TAX;
+      addGold(opponentId, prize);
+
+      db.update(schema.pvpMatch)
+        .set({
+          status: "completed",
+          winnerId: opponentId,
+          result: JSON.stringify({ forfeit: true, forfeiterId: userId }),
+        })
+        .where(eq(schema.pvpMatch.id, matchId))
+        .run();
+
+      return NextResponse.json({
+        result: {
+          winner: getUserName(opponentId),
+          winnerId: opponentId,
+          prize,
+          message: `${getUserName(userId)} 放弃了对决`,
+          forfeit: true,
+        },
+        newGold: getUserGold(userId),
+      });
     }
 
     return NextResponse.json({ error: "无效的 action" }, { status: 400 });
