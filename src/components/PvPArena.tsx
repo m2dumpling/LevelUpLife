@@ -82,6 +82,7 @@ interface MatchResult2 {
   correctAnswer?: number;
   yourAnswer?: number;
   forfeit?: boolean;
+  draw?: boolean;
   timeout?: boolean;
   ties?: number;
 }
@@ -258,8 +259,11 @@ export function PvPArena({
           yourAnswer: parsed.submittedAnswer as number | undefined,
           ties: parsed.ties as number | undefined,
           forfeit: parsed.forfeit as boolean | undefined,
+          draw: parsed.draw as boolean | undefined,
           message: parsed.forfeit
             ? "对手放弃了对决"
+            : parsed.draw
+            ? (parsed.message as string) || "平局！金币已退还"
             : undefined,
         });
         setView("result");

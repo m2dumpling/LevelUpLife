@@ -743,10 +743,11 @@ async function handleSubmit(
         addGold(match.player1Id, match.bet);
         addGold(match.player2Id!, match.bet);
 
+        const drawResult = { ...currentResult, message: "平局！金币已退还", draw: true };
         db.update(schema.pvpMatch)
           .set({
             status: "completed",
-            result: JSON.stringify(currentResult),
+            result: JSON.stringify(drawResult),
             winnerId: null,
           })
           .where(eq(schema.pvpMatch.id, matchId))
@@ -759,6 +760,7 @@ async function handleSubmit(
             message: "平局！金币已退还",
             player1Move: p1m,
             player2Move: p2m,
+            draw: true,
           },
           newGold: getUserGold(userId),
         });
