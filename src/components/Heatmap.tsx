@@ -3,14 +3,8 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { formatLocalDate as formatBusinessDate } from "@/lib/date-utils";
 
-// ── GitHub 风格 5 级绿色（暗色主题等效）──
-const COLORS = [
-  "oklch(0.22 0.02 260)", // 0: 无活动
-  "oklch(0.32 0.06 150)", // 1: 低
-  "oklch(0.42 0.10 148)", // 2: 中低
-  "oklch(0.55 0.15 145)", // 3: 中高
-  "oklch(0.68 0.17 140)", // 4: 高
-];
+// ── GitHub 风格 5 级绿色 ── 使用 CSS class 自动响应浅色/深色
+const HEATMAP_CLASSES = ["heatmap-0", "heatmap-1", "heatmap-2", "heatmap-3", "heatmap-4"];
 
 const MONTH_NAMES = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
 const DAY_LABELS_FULL = ["日", "一", "二", "三", "四", "五", "六"];
@@ -466,8 +460,8 @@ function CellBlock({
 
   return (
     <div
-      className="relative rounded-[2px] cursor-pointer transition-transform hover:scale-125 hover:z-10 flex items-center justify-center"
-      style={{ width: size, height: size, backgroundColor: COLORS[level] ?? COLORS[0] }}
+      className={`relative rounded-[2px] cursor-pointer transition-transform hover:scale-125 hover:z-10 flex items-center justify-center ${HEATMAP_CLASSES[level] ?? HEATMAP_CLASSES[0]}`}
+      style={{ width: size, height: size }}
       onMouseEnter={(e) => {
         const rect = (e.target as HTMLElement).getBoundingClientRect();
         onHover({ x: rect.left + rect.width / 2, y: rect.top - 8, date: cell.date, xp: cell.xp });
@@ -509,8 +503,7 @@ function Legend({ cellSize }: { cellSize: number }) {
       {[0, 1, 2, 3, 4].map((lv) => (
         <div
           key={lv}
-          className="rounded-[2px]"
-          style={{ width: legendSize, height: legendSize, backgroundColor: COLORS[lv] }}
+          className={`rounded-[2px] ${HEATMAP_CLASSES[lv]}`}
         />
       ))}
       <span className="text-[10px] text-muted-foreground/60 ml-0.5">多</span>

@@ -185,3 +185,16 @@
   background: var(--primary);
   animation: strikethrough 0.4s ease-out forwards;
 }
+
+/* ─── 热力图色阶 (自动响应浅色/深色) ─── */
+.heatmap-0 { background-color: oklch(0.92 0.005 260); }
+.heatmap-1 { background-color: oklch(0.78 0.08 148); }
+.heatmap-2 { background-color: oklch(0.62 0.14 145); }
+.heatmap-3 { background-color: oklch(0.48 0.16 142); }
+.heatmap-4 { background-color: oklch(0.38 0.14 140); }
+
+.dark .heatmap-0 { background-color: oklch(0.22 0.02 260); }
+.dark .heatmap-1 { background-color: oklch(0.32 0.06 150); }
+.dark .heatmap-2 { background-color: oklch(0.42 0.10 148); }
+.dark .heatmap-3 { background-color: oklch(0.55 0.15 145); }
+.dark .heatmap-4 { background-color: oklch(0.68 0.17 140); }
