@@ -703,7 +703,7 @@ export function PvPArena({
             key={`${mathProblem.a}-${mathProblem.op}-${mathProblem.b}`}
             initial={{ scale: 1.3, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="text-xl font-bold text-center text-primary-foreground"
+            className="text-xl font-bold text-center text-foreground"
           >
             {String(mathProblem.a)}{" "}
             {mathProblem.op === "+" ? "+" : "−"}{" "}
