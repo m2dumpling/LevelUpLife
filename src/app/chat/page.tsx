@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Shield, Hash, Send, ArrowLeft, Users, Copy, Check, Crown, LogOut, Menu, X, Reply, XCircle,
+  Shield, Hash, Send, ArrowLeft, Users, Copy, Check, Crown, LogOut, Menu, X, Reply, XCircle, Gift, UserPlus, Coins,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatBeijingTime } from "@/lib/date-utils";
@@ -56,6 +56,26 @@ export default function ChatPage() {
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // 送礼
+  const [giftTarget, setGiftTarget] = useState<{ userId: number; username: string } | null>(null);
+  const [giftType, setGiftType] = useState<"gold" | "ore">("gold");
+  const [giftAmount, setGiftAmount] = useState("10");
+  const [giftOre, setGiftOre] = useState("ore_copper");
+  const [giftMsg, setGiftMsg] = useState("");
+
+  const handleGift = (userId: number, username: string) => { setGiftTarget({ userId, username }); setGiftMsg(""); };
+  const handleAddFriend = async (friendId: number) => {
+    await fetch("/api/friend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "add", friendId }) });
+  };
+  const doGift = async () => {
+    if (!giftTarget) return;
+    const value = giftType === "gold" ? giftAmount : giftOre;
+    const res = await fetch("/api/guild/gift", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ toUserId: giftTarget.userId, giftType, giftValue: value }) });
+    const data = await res.json();
+    setGiftMsg(data.success ? data.message : (data.error || "送礼失败"));
+    if (data.success) setTimeout(() => { setGiftTarget(null); setGiftMsg(""); }, 1500);
+  };
 
   /* ── 数据 ── */
   const fetchGuild = useCallback(async () => {
@@ -206,7 +226,13 @@ export default function ChatPage() {
             <div key={m.userId} className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-muted/50 transition-colors">
               <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ backgroundColor: userColor(m.username) }}>{m.username[0]}</div>
               <span className="text-sm text-foreground truncate">{m.username}</span>
-              {m.userId === guild.guild.leaderId && <Crown className="w-3 h-3 text-amber-400 shrink-0 ml-auto" />}
+              {m.userId !== myUserId && (
+                <div className="flex items-center gap-1 ml-auto">
+                  <button onClick={() => handleGift(m.userId, m.username)} className="p-1 hover:bg-accent rounded text-amber-400" title="送礼物"><Gift className="w-4 h-4" /></button>
+                  <button onClick={() => handleAddFriend(m.userId)} className="p-1 hover:bg-accent rounded text-emerald-400" title="加好友"><UserPlus className="w-4 h-4" /></button>
+                </div>
+              )}
+              {m.userId === guild.guild.leaderId && <Crown className="w-3 h-3 text-amber-400 shrink-0" />}
             </div>
           ))}
         </div>
@@ -359,6 +385,36 @@ export default function ChatPage() {
           </div>
         </div>
       </main>
+
+      {/* 送礼弹窗 */}
+      {giftTarget && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60" onClick={() => setGiftTarget(null)}>
+          <div onClick={e => e.stopPropagation()} className="bg-card border border-border rounded-xl p-5 w-[calc(100%-2rem)] max-w-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-foreground flex items-center gap-2"><Gift className="w-4 h-4 text-amber-400" />送礼给 {giftTarget.username}</h3>
+              <button onClick={() => setGiftTarget(null)}><X className="w-4 h-4" /></button>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setGiftType("gold")} className={`flex-1 py-2 rounded-lg text-sm font-bold ${giftType === "gold" ? "bg-amber-500/20 text-amber-400 border border-amber-500/30" : "bg-muted/50 text-muted-foreground"}`}>
+                <Coins className="w-4 h-4 mx-auto mb-0.5" />金币</button>
+              <button onClick={() => setGiftType("ore")} className={`flex-1 py-2 rounded-lg text-sm font-bold ${giftType === "ore" ? "bg-amber-500/20 text-amber-400 border border-amber-500/30" : "bg-muted/50 text-muted-foreground"}`}>
+                🪨 矿石</button>
+            </div>
+            {giftType === "gold" ? (
+              <input type="number" value={giftAmount} onChange={e => setGiftAmount(e.target.value)} min="1"
+                className="w-full px-3 py-1.5 bg-muted/50 border border-border rounded-md text-sm text-center" />
+            ) : (
+              <select value={giftOre} onChange={e => setGiftOre(e.target.value)} className="w-full px-3 py-1.5 bg-muted/50 border border-border rounded-md text-sm">
+                <option value="ore_copper">🪨 铜矿石</option><option value="ore_iron">⛏️ 铁矿石</option>
+                <option value="ore_gold">✨ 金矿石</option><option value="ore_mithril">💎 秘银矿石</option>
+                <option value="ore_adamantite">🔮 精金矿石</option>
+              </select>
+            )}
+            {giftMsg && <p className="text-xs text-emerald-400 text-center">{giftMsg}</p>}
+            <Button onClick={doGift} className="w-full">送出礼物</Button>
+          </div>
+        </div>
+      )}
 
       {/* ── 右键菜单 ── */}
       {ctxMenu && (
