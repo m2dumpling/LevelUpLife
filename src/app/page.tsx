@@ -172,6 +172,7 @@ export default function HomePage() {
   }, [refreshInventory]);
 
   const [npcMessage, setNpcMessage] = useState("");
+  const [giftToast, setGiftToast] = useState("");
   useEffect(() => {
     const handler = (e: Event) => {
       const msg = (e as CustomEvent).detail;
@@ -180,6 +181,14 @@ export default function HomePage() {
     };
     window.addEventListener("npc-speak", handler);
     return () => window.removeEventListener("npc-speak", handler);
+  }, []);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const msg = (e as CustomEvent).detail;
+      setGiftToast(msg);
+    };
+    window.addEventListener("gift-alert", handler);
+    return () => window.removeEventListener("gift-alert", handler);
   }, []);
 
   useEffect(() => {
@@ -211,7 +220,7 @@ export default function HomePage() {
           if (data.giftAlerts?.length > 0) {
             for (const g of data.giftAlerts) {
               const itemLabel = g.giftType === "gold" ? `${g.giftValue}G` : g.giftValue;
-              window.dispatchEvent(new CustomEvent("npc-speak", { detail: `🎁 ${g.fromUsername} 送给你 ${itemLabel}！` }));
+              window.dispatchEvent(new CustomEvent("gift-alert", { detail: `🎁 ${g.fromUsername} 送给你 ${itemLabel}` }));
             }
           }
         }
@@ -318,6 +327,18 @@ export default function HomePage() {
             className="fixed bottom-20 md:bottom-4 left-1/2 -translate-x-1/2 z-50 bg-card border border-border rounded-lg px-4 py-2 shadow-lg text-sm text-foreground max-w-sm text-center"
           >
             {npcMessage}
+          </motion.div>
+        )}
+        {giftToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            className="fixed bottom-32 md:bottom-16 left-1/2 -translate-x-1/2 z-[60] bg-card border border-amber-500/30 rounded-lg px-4 py-3 shadow-lg max-w-sm text-center space-y-2"
+          >
+            <p className="text-sm text-foreground">{giftToast}</p>
+            <button onClick={() => setGiftToast("")}
+              className="px-4 py-1 bg-amber-500/20 text-amber-400 rounded-md text-xs font-bold hover:bg-amber-500/30 transition-colors">
+              Got it!
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
