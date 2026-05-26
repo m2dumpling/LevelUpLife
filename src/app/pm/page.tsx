@@ -31,7 +31,16 @@ export default function PmPage() {
 
   useEffect(() => {
     fetch("/api/user").then(r => r.json()).then(u => setCurrentUserId(u.id)).catch(() => {});
-    loadFriends();
+    (async () => {
+      const list = await (await fetch("/api/friend")).json();
+      setFriends(list);
+      const params = new URLSearchParams(window.location.search);
+      const fid = parseInt(params.get("friend") || "0");
+      if (fid && list.length > 0) {
+        const f = list.find((fr: Friend) => fr.id === fid);
+        if (f) selectFriend(f);
+      }
+    })();
   }, []);
 
   const loadFriends = async () => {

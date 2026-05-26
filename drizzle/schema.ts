@@ -263,6 +263,15 @@ export const friendChat = sqliteTable("friend_chat", {
   createdAt: text("created_at").notNull(),
 });
 
+// ── 好友请求 ──
+export const friendRequest = sqliteTable("friend_request", {
+  id: integer("id").primaryKey(),
+  fromUserId: integer("from_user_id").notNull(),
+  toUserId: integer("to_user_id").notNull(),
+  status: text("status").notNull().default("pending"),
+  createdAt: text("created_at").notNull(),
+});
+
 // ── 礼物记录 ──
 export const giftLog = sqliteTable("gift_log", {
   id: integer("id").primaryKey(),

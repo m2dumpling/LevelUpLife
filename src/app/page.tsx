@@ -187,6 +187,12 @@ export default function HomePage() {
     return () => window.removeEventListener("inventory-changed", handler);
   }, [refreshInventory]);
 
+  useEffect(() => {
+    const handler = () => refreshStats();
+    window.addEventListener("stats-changed", handler);
+    return () => window.removeEventListener("stats-changed", handler);
+  }, [refreshStats]);
+
   const handlePanelClick = (id: string) => {
     setActivePanel((prev) => (prev === id ? null : id));
   };
