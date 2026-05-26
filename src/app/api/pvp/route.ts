@@ -673,7 +673,27 @@ async function handleSubmit(
     )
     .get();
 
+  // 如果不在 playing 状态，检查是否已结算完成 — 把结果直接返回
   if (!match) {
+    const done = db
+      .select()
+      .from(schema.pvpMatch)
+      .where(eq(schema.pvpMatch.id, matchId))
+      .get();
+
+    if (done && done.status === "completed") {
+      const result = done.result ? JSON.parse(done.result as string) : {};
+      return NextResponse.json({
+        result: {
+          winner: done.winnerId ? getUserName(done.winnerId) : null,
+          winnerId: done.winnerId,
+          prize: done.bet ? done.bet * 2 - TAX : 0,
+          message: done.winnerId === userId ? "你赢了！" : `${getUserName(done.winnerId!)} 获胜`,
+          ...(result as object),
+        },
+      });
+    }
+
     return NextResponse.json(
       { error: "该对决不存在或已结束" },
       { status: 404 }
