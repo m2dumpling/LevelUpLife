@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Cloud, Store, Package, Gift, Swords, Shield, Users } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { UserMenu } from "@/components/UserMenu";
 import { Sidebar, type SidebarItem } from "@/components/Sidebar";
 import { BossWidget } from "@/components/BossWidget";
 import { StatDashboard } from "@/components/StatDashboard";
@@ -301,7 +302,10 @@ export default function HomePage() {
 
       {/* ── Main content area (offset for sidebar) ── */}
       <div className="ml-0 md:ml-[60px] pb-[72px] md:pb-0">
-        <Navbar stats={stats} />
+        <div className="flex items-center gap-2">
+          <Navbar stats={stats} />
+          <UserMenu />
+        </div>
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
           {/* Inline badges: weather + class + calendar */}

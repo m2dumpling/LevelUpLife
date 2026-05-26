@@ -252,6 +252,7 @@ export const friend = sqliteTable("friend", {
   id: integer("id").primaryKey(),
   userId: integer("user_id").notNull(),
   friendId: integer("friend_id").notNull(),
+  note: text("note"),
   createdAt: text("created_at").notNull(),
 });
 

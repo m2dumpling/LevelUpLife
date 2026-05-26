@@ -49,7 +49,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const userId = getUserId(request);
-    const { action, friendId, message } = await request.json();
+    const { action, friendId, message, note } = await request.json();
 
     // 发送好友请求
     if (action === "request") {
@@ -104,6 +104,15 @@ export async function POST(request: Request) {
     if (action === "send") {
       if (!friendId || !message) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
       db.insert(schema.friendChat).values({ userId, friendId, message, createdAt: new Date().toISOString() }).run();
+      return NextResponse.json({ success: true });
+    }
+
+    // 修改备注
+    if (action === "note") {
+      if (!friendId) return NextResponse.json({ error: "Missing friendId" }, { status: 400 });
+      db.update(schema.friend).set({ note: note || null }).where(
+        and(eq(schema.friend.userId, userId), eq(schema.friend.friendId, friendId))
+      ).run();
       return NextResponse.json({ success: true });
     }
 
