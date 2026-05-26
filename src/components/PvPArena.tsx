@@ -652,7 +652,7 @@ export function PvPArena({
                     whileTap={{ scale: 0.9 }}
                     onClick={() => handleRpsSubmit(m)}
                     disabled={submitting}
-                    className="w-20 h-20 rounded-xl text-3xl flex flex-col items-center justify-center gap-1 border-2 border-border bg-muted/50 hover:border-orange-500 hover:bg-gray-700/50 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-20 h-20 rounded-xl text-3xl flex flex-col items-center justify-center gap-1 border-2 border-border bg-muted/50 hover:border-orange-500 hover:bg-muted/50 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {RPS_EMOJI[m]}
                     <span className="text-[10px] text-muted-foreground">
@@ -784,7 +784,7 @@ export function PvPArena({
         )}
 
         <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto bg-card border-border text-foreground p-0 gap-0">
-          <div className="sticky top-0 z-10 bg-gray-900/95 backdrop-blur border-b border-gray-800 px-6 py-4">
+          <div className="sticky top-0 z-10 bg-card/95 backdrop-blur border-b border-border px-6 py-4">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-primary-foreground flex items-center gap-2">
                 <Swords className="w-5 h-5 text-orange-400" />
@@ -1056,7 +1056,7 @@ export function PvPArena({
                     resetState();
                     fetchLobby();
                   }}
-                  className="w-full py-2.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-1"
+                  className="w-full py-2.5 bg-muted hover:bg-accent text-foreground rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-1"
                 >
                   <CheckCircle className="w-4 h-4" />
                   返回大厅
@@ -1154,7 +1154,7 @@ export function PvPArena({
                       }
                     />
 
-                    <DialogContent className="sm:max-w-[400px] bg-gray-900 border-gray-800 text-gray-100">
+                    <DialogContent className="sm:max-w-[400px] bg-card border-border text-foreground">
                       <DialogHeader>
                         <DialogTitle className="text-primary-foreground">
                           创建 PvP 对决
@@ -1221,7 +1221,7 @@ export function PvPArena({
                                 className={`px-2 py-0.5 rounded text-[10px] transition-colors ${
                                   bet === b
                                     ? "bg-orange-600 text-primary-foreground"
-                                    : "bg-muted text-muted-foreground hover:bg-gray-700"
+                                    : "bg-muted text-muted-foreground hover:bg-muted"
                                 }`}
                               >
                                 {b}G
@@ -1293,11 +1293,11 @@ export function PvPArena({
                         className="flex items-center justify-between bg-muted/40 border border-border/50 rounded-xl p-2.5 md:p-3 hover:border-gray-600/50 transition-colors"
                       >
                         <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-gray-700/50 flex items-center justify-center shrink-0 text-sm">
+                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-muted/50 flex items-center justify-center shrink-0 text-sm">
                             {GAME_TYPES[m.type]?.icon}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-gray-200 truncate">
+                            <p className="text-sm font-semibold text-foreground truncate">
                               {GAME_TYPES[m.type]?.name}
                             </p>
                             <p className="text-[11px] md:text-xs text-muted-foreground/70 flex items-center gap-1">

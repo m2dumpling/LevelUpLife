@@ -81,7 +81,7 @@ export function StoryDialog({ event, onClose }: StoryDialogProps) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* 标题栏 */}
-            <div className="bg-[oklch(0.22_0.04_260)] border-b border-primary/20 px-5 py-3 flex items-center gap-2">
+            <div className="bg-muted/50 border-b border-primary/20 px-5 py-3 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary" />
               <span className="text-sm font-bold text-primary">{event.title}</span>
             </div>
@@ -120,7 +120,7 @@ export function StoryDialog({ event, onClose }: StoryDialogProps) {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center justify-center gap-4 p-3 rounded-lg bg-[oklch(0.18_0.03_260)] border border-border"
+                  className="flex items-center justify-center gap-4 p-3 rounded-lg bg-muted/50 border border-border"
                 >
                   <span className="text-sm font-bold text-emerald-400">
                     +{reward.xp} XP

@@ -34,7 +34,7 @@ export function XPBar({ xp, xpToNext, level }: XPBarProps) {
           {xp} / {xpToNext} XP
         </span>
       </div>
-      <div className="relative w-full h-3 rounded-full bg-[oklch(0.2_0.02_260)] overflow-hidden border border-[oklch(0.25_0.02_260)]">
+      <div className="relative w-full h-3 rounded-full bg-muted overflow-hidden border border-border">
         <motion.div
           className="h-full rounded-full"
           style={{
