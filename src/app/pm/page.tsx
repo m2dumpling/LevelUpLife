@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Send, ArrowLeft, Users, Menu, X, Reply, XCircle, Gift, Coins, MessageCircle, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -273,7 +274,12 @@ export default function PmPage() {
                 <option value="ore_copper">🪨 铜矿石</option><option value="ore_iron">⛏️ 铁矿石</option><option value="ore_gold">✨ 金矿石</option><option value="ore_mithril">💎 秘银矿石</option><option value="ore_adamantite">🔮 精金矿石</option>
               </select>
             )}
-            {giftMsg && <p className="text-xs text-emerald-400 text-center">{giftMsg}</p>}
+            {giftMsg && (
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300 }}
+                className="text-sm text-emerald-400 text-center bg-emerald-500/10 rounded-lg py-2 px-3">
+                {giftMsg} 🎉
+              </motion.div>
+            )}
             <Button onClick={doGift} className="w-full">送出礼物</Button>
           </div>
         </div>

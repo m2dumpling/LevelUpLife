@@ -610,7 +610,12 @@ export function GuildPanel({ onClose }: { onClose: () => void }) {
                 <option value="ore_adamantite">🔮 精金矿石</option>
               </select>
             )}
-            {giftMsg && <p className="text-xs text-emerald-400 text-center">{giftMsg}</p>}
+            {giftMsg && (
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300 }}
+                className="text-sm text-emerald-400 text-center bg-emerald-500/10 rounded-lg py-2 px-3">
+                {giftMsg} {giftMsg.includes("成功") || giftMsg.includes("送") ? "🎉" : ""}
+              </motion.div>
+            )}
             <Button onClick={doGift} disabled={giftLoading} className="w-full">
               {giftLoading ? "送出中..." : "送出礼物"}
             </Button>

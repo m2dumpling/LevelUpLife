@@ -207,6 +207,13 @@ export default function HomePage() {
           const data = await res.json();
           setGuildBlink(data.guildUnread > 0);
           setFriendBlink((Object.values(data.friendUnread) as number[]).some((v) => v > 0) || data.requestsCount > 0);
+          // Show gift alerts as NPC-style toast
+          if (data.giftAlerts?.length > 0) {
+            for (const g of data.giftAlerts) {
+              const itemLabel = g.giftType === "gold" ? `${g.giftValue}G` : g.giftValue;
+              window.dispatchEvent(new CustomEvent("npc-speak", { detail: `🎁 ${g.fromUsername} 送给你 ${itemLabel}！` }));
+            }
+          }
         }
       } catch {}
     };

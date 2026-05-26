@@ -50,7 +50,21 @@ export async function GET(request: Request) {
       .where(and(eq(schema.friendRequest.toUserId, userId), eq(schema.friendRequest.status, "pending")))
       .all().length;
 
-    return NextResponse.json({ guildUnread, friendUnread, requestsCount });
+    // Gift notifications (received since last check, not yet seen)
+    const giftAlerts: { fromUsername: string; giftType: string; giftValue: string }[] = [];
+    if (afterTimestamp > 0) {
+      const newGifts = db.select().from(schema.giftLog).where(and(
+        eq(schema.giftLog.toUserId, userId),
+        gt(schema.giftLog.date, new Date(afterTimestamp - 86400000).toISOString().split("T")[0])
+      )).all();
+      for (const g of newGifts) {
+        const sender = db.select({ username: schema.user.username }).from(schema.user).where(eq(schema.user.id, g.fromUserId)).get();
+        giftAlerts.push({ fromUsername: sender?.username || "未知", giftType: g.giftType, giftValue: g.giftValue });
+      }
+      // Mark as seen by updating last_friend_check timestamp in the client
+    }
+
+    return NextResponse.json({ guildUnread, friendUnread, requestsCount, giftAlerts });
   } catch {
     return NextResponse.json({ guildUnread: 0, friendUnread: {}, requestsCount: 0 });
   }
