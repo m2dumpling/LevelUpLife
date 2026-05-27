@@ -14,6 +14,7 @@ import { assignClass } from "@/lib/class-analyzer";
 const HP_PENALTY_PER_MISSED = 5;
 const BASE_HP_RECOVERY_ON_LOGIN = 20;
 const INACTIVE_DAYS = 15;
+const FRIEND_CHAT_RETENTION_DAYS = 180;
 
 let cleanupRanToday = false;
 
@@ -210,5 +211,12 @@ function runCleanupIfNeeded(_userId: number) {
 
   if (inactiveUsers.length > 0) {
     console.log(`[cleanup] Deleted ${inactiveUsers.length} inactive accounts (last login < ${cutoff})`);
+  }
+
+  // 清理超过半年的好友私聊消息
+  const chatCutoff = getDaysAgoLocal(FRIEND_CHAT_RETENTION_DAYS);
+  const deleted = db.delete(schema.friendChat).where(lt(schema.friendChat.createdAt, new Date(chatCutoff + "T00:00:00+08:00").toISOString())).run();
+  if (deleted.changes > 0) {
+    console.log(`[cleanup] Deleted ${deleted.changes} old friend chat messages (older than ${FRIEND_CHAT_RETENTION_DAYS} days)`);
   }
 }
