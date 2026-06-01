@@ -94,6 +94,7 @@ export async function POST(request: Request) {
       sameSite: cookie.sameSite,
       path: cookie.path,
       maxAge: cookie.maxAge,
+      domain: cookie.domain,
     });
 
     return response;

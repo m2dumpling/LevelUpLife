@@ -87,6 +87,7 @@ export async function POST(request: Request) {
       sameSite: cookieOpts.sameSite,
       path: cookieOpts.path,
       maxAge: cookieOpts.maxAge,
+      domain: cookieOpts.domain,
     });
 
     return res;

@@ -55,6 +55,7 @@ export function getCookieOptions(): {
   sameSite: "lax";
   path: string;
   maxAge: number;
+  domain: string;
 } {
   const thirtyDays = 30 * 24 * 60 * 60;
   return {
@@ -65,6 +66,7 @@ export function getCookieOptions(): {
     sameSite: "lax" as const,
     path: "/",
     maxAge: thirtyDays,
+    domain: process.env.NODE_ENV === "production" ? ".119777.xyz" : undefined as unknown as string,
   };
 }
 
