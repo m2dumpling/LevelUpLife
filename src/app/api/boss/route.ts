@@ -24,13 +24,7 @@ const DAMAGE_PER_DIFFICULTY: Record<string, number> = {
   trivial: 1, easy: 2, medium: 4, hard: 8, heroic: 16,
 };
 
-function getMonday(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1));
-  return d.toISOString().split("T")[0];
-}
-
-function getToday(): string { return new Date().toISOString().split("T")[0]; }
+function getToday(): string { return getTodayLocal(); }
 
 function countActiveUsers(): number {
   const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString().split("T")[0];
@@ -75,10 +69,6 @@ export async function GET(request: Request) {
     const totalDamage = contributions.reduce((s, c) => s + Number(c.damage), 0);
 
     // 如果击败了且未通知过，标记已通知
-    if (boss.defeated && !boss.notified) {
-      db.update(schema.boss).set({ notified: true }).where(eq(schema.boss.id, boss.id)).run();
-    }
-
     return NextResponse.json({
       ...boss,
       contributions,
@@ -90,7 +80,7 @@ export async function GET(request: Request) {
       reward: { gold: boss.rewardGold || 80, description: "击败BOSS所有参战者瓜分金币奖励" },
       damageTable: DAMAGE_PER_DIFFICULTY,
     });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "获取BOSS信息失败" }, { status: 500 });
   }
 }
@@ -101,7 +91,7 @@ export async function recordBossDamage(userId: number, difficulty: string, taskI
   if (boss.defeated) return;
 
   const dmg = DAMAGE_PER_DIFFICULTY[difficulty] || 1;
-  const today = new Date().toISOString().split("T")[0];
+  const today = getToday();
 
   // 防刷：同一用户+同一任务+同一天只造成一次伤害
   if (taskId) {
@@ -125,7 +115,7 @@ export async function recordBossDamage(userId: number, difficulty: string, taskI
 /** 内部调用：BOSS被击败后分发奖励 */
 export async function checkBossDefeatedReward(): Promise<string | null> {
   const boss = spawnBoss();
-  if (!boss.defeated) return null;
+  if (!boss.defeated || boss.notified) return null;
 
   const contributed = db.select({ userId: schema.bossContribution.userId })
     .from(schema.bossContribution)
@@ -134,6 +124,11 @@ export async function checkBossDefeatedReward(): Promise<string | null> {
 
   const rewardGold = boss.rewardGold || 80;
   const rewarded = new Set<number>();
+  db.update(schema.boss)
+    .set({ notified: true })
+    .where(eq(schema.boss.id, boss.id))
+    .run();
+
   for (const c of contributed) {
     if (rewarded.has(c.userId)) continue;
     rewarded.add(c.userId);

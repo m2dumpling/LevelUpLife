@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
-import { eq, and, gt, ne } from "drizzle-orm";
+import { eq, and, gt, ne, isNull, inArray } from "drizzle-orm";
 import { getUserId } from "@/lib/auth";
 
 export async function GET(request: Request) {
@@ -56,11 +56,18 @@ export async function GET(request: Request) {
     const giftAlerts: { fromUsername: string; giftType: string; giftValue: string; giftId: number }[] = [];
     const newGifts = db.select().from(schema.giftLog).where(and(
       eq(schema.giftLog.toUserId, userId),
-      gt(schema.giftLog.id, afterGiftId)
+      gt(schema.giftLog.id, afterGiftId),
+      isNull(schema.giftLog.seenAt)
     )).all();
     for (const g of newGifts) {
       const sender = db.select({ username: schema.user.username }).from(schema.user).where(eq(schema.user.id, g.fromUserId)).get();
       giftAlerts.push({ fromUsername: sender?.username || "未知", giftType: g.giftType, giftValue: g.giftValue, giftId: g.id });
+    }
+    if (newGifts.length > 0) {
+      db.update(schema.giftLog)
+        .set({ seenAt: new Date().toISOString() })
+        .where(inArray(schema.giftLog.id, newGifts.map((g) => g.id)))
+        .run();
     }
 
     return NextResponse.json({ guildUnread, friendUnread, requestsCount, giftAlerts });
@@ -68,4 +75,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ guildUnread: 0, friendUnread: {}, requestsCount: 0 });
   }
 }
-

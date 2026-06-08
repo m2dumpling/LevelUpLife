@@ -1,4 +1,4 @@
-import { desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, or } from "drizzle-orm";
 import type { InferSelectModel } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import {
@@ -41,11 +41,11 @@ function completionKeyFor(task: TaskRow, date = getTodayLocal()): string {
   return task.mode === "habit" ? `${task.id}:${date}` : `${task.id}:plan`;
 }
 
-function getEquippedKeys(): string[] {
+function getEquippedKeys(userId: number): string[] {
   return db
     .select()
     .from(schema.inventory)
-    .where(eq(schema.inventory.equipped, true))
+    .where(and(eq(schema.inventory.userId, userId), eq(schema.inventory.equipped, true)))
     .all()
     .map((item) => item.itemKey);
 }
@@ -55,7 +55,10 @@ function getOpenLedger(task: TaskRow): RewardLedgerRow | undefined {
   const rows = db
     .select()
     .from(schema.rewardLedger)
-    .where(eq(schema.rewardLedger.taskId, task.id))
+    .where(and(
+      eq(schema.rewardLedger.taskId, task.id),
+      or(eq(schema.rewardLedger.userId, task.userId), isNull(schema.rewardLedger.userId))
+    ))
     .orderBy(desc(schema.rewardLedger.id))
     .all();
 
@@ -119,7 +122,7 @@ export function grantTaskReward(task: TaskRow): RewardGrantResult {
     user,
     adjustedXp,
     adjustedGold,
-    getEquippedKeys()
+    getEquippedKeys(task.userId)
   );
   const now = new Date().toISOString();
 

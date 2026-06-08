@@ -78,7 +78,7 @@ function handlePetFeeding(userId: number, dateStr: string) {
   }
 }
 
-function habitMatchesDate(
+export function habitMatchesDate(
   frequency: string | null | undefined,
   dateStr: string,
   frequencyDays?: string | null,
@@ -87,9 +87,12 @@ function habitMatchesDate(
   if (freq === "daily") return true;
   if (freq === "weekly") {
     if (frequencyDays) return frequencyDays.split(",").map(Number).includes(getDayOfWeek(dateStr));
-    return getDayOfWeek(dateStr) === new Date().getDay();
+    return true;
   }
-  if (freq === "monthly") return getDayOfMonth(dateStr) === new Date().getDate();
+  if (freq === "monthly") {
+    if (frequencyDays) return frequencyDays.split(",").map(Number).includes(getDayOfMonth(dateStr));
+    return true;
+  }
   return true;
 }
 
@@ -129,7 +132,7 @@ export function settleIfNeeded(userId: number): {
 
   // 结算昨天
   if (!user.lastSettlementDate || user.lastSettlementDate >= yesterday) {
-    runCleanupIfNeeded(userId);
+    runCleanupIfNeeded();
     return { hpChanged, penaltyApplied, hpLost, missedCount };
   }
 
@@ -141,7 +144,7 @@ export function settleIfNeeded(userId: number): {
       .set({ lastSettlementDate: yesterday, streakDays: 0, totalDays: user.totalDays + 1 })
       .where(eq(schema.user.id, userId)).run();
     handlePetFeeding(userId, yesterday);
-    runCleanupIfNeeded(userId);
+    runCleanupIfNeeded();
     return { hpChanged, penaltyApplied, hpLost, missedCount };
   }
 
@@ -183,7 +186,7 @@ export function settleIfNeeded(userId: number): {
     if (cls) classAssigned = cls.className;
   }
 
-  runCleanupIfNeeded(userId);
+  runCleanupIfNeeded();
   return { hpChanged, penaltyApplied, hpLost, missedCount, stoneGained, classAssigned };
 }
 
@@ -193,8 +196,7 @@ export function getHpPenaltyActive(userId: number): boolean {
   return user?.hpPenaltyActive ?? false;
 }
 
-function runCleanupIfNeeded(_userId: number) {
-  const today = getTodayLocal();
+function runCleanupIfNeeded() {
   if (cleanupRanToday) return;
   cleanupRanToday = true;
 

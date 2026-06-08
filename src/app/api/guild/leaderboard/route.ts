@@ -4,28 +4,50 @@
 
 import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getUserId } from "@/lib/auth";
+import { totalXpFromLevelState } from "@/lib/xp-calculator";
 
 export async function GET(request: Request) {
   try {
     getUserId(request);
 
-    const leaderboard = db
+    const rows = db
       .select({
-        rank: sql<number>`ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(${schema.user.xp}), 0) DESC)`.as("rank"),
         guildId: schema.guildMember.guildId,
         guildName: schema.guild.name,
-        memberCount: sql<number>`COUNT(DISTINCT ${schema.guildMember.userId})`,
-        totalXp: sql<number>`COALESCE(SUM(${schema.user.xp}), 0)`,
+        userId: schema.guildMember.userId,
+        level: schema.user.level,
+        xp: schema.user.xp,
       })
       .from(schema.guildMember)
       .innerJoin(schema.guild, eq(schema.guildMember.guildId, schema.guild.id))
       .innerJoin(schema.user, eq(schema.guildMember.userId, schema.user.id))
-      .groupBy(schema.guildMember.guildId)
-      .orderBy(desc(sql`COALESCE(SUM(${schema.user.xp}), 0)`))
-      .limit(10)
       .all();
+
+    const guilds = new Map<number, { guildId: number; guildName: string; memberIds: Set<number>; totalXp: number }>();
+    for (const row of rows) {
+      const entry = guilds.get(row.guildId) || {
+        guildId: row.guildId,
+        guildName: row.guildName,
+        memberIds: new Set<number>(),
+        totalXp: 0,
+      };
+      entry.memberIds.add(row.userId);
+      entry.totalXp += totalXpFromLevelState(row.level, row.xp);
+      guilds.set(row.guildId, entry);
+    }
+
+    const leaderboard = [...guilds.values()]
+      .sort((a, b) => b.totalXp - a.totalXp || a.guildId - b.guildId)
+      .slice(0, 10)
+      .map((guild, index) => ({
+        rank: index + 1,
+        guildId: guild.guildId,
+        guildName: guild.guildName,
+        memberCount: guild.memberIds.size,
+        totalXp: guild.totalXp,
+      }));
 
     return NextResponse.json({ leaderboard });
   } catch (e) {

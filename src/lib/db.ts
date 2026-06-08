@@ -20,6 +20,7 @@ sqlite.pragma("foreign_keys = ON");
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS reward_ledger (
     id integer PRIMARY KEY,
+    user_id integer NOT NULL,
     task_id integer NOT NULL,
     completion_key text NOT NULL,
     mode text NOT NULL,
@@ -47,6 +48,18 @@ try {
   sqlite.exec("ALTER TABLE user ADD COLUMN city text");
 } catch {
   // 列已存在
+}
+
+try {
+  sqlite.exec("ALTER TABLE reward_ledger ADD COLUMN user_id integer");
+} catch {
+  // Column already exists.
+}
+
+try {
+  sqlite.exec("ALTER TABLE gift_log ADD COLUMN seen_at text");
+} catch {
+  // Column already exists.
 }
 
 export const db = drizzle(sqlite, { schema });

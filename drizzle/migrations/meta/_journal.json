@@ -8,6 +8,13 @@
       "when": 1778484387589,
       "tag": "0000_chief_calypso",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1780925482094,
+      "tag": "0001_friendly_magus",
+      "breakpoints": true
     }
   ]
 }

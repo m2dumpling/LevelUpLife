@@ -111,7 +111,8 @@ export async function PATCH(
       }
 
       db.insert(schema.habitLog).values({ userId, taskId, completedAt: today }).run();
-      recordBossDamage(userId, task.difficulty, taskId);
+      await recordBossDamage(userId, task.difficulty, taskId);
+      const bossRewardMessage = await checkBossDefeatedReward();
 
       const newStreak = recalculateHabitStreak(taskId, userId);
       const newBestStreak = Math.max(newStreak, task.bestStreak);
@@ -156,6 +157,7 @@ export async function PATCH(
         newXp: result.xp,
         newXpToNext: result.xpToNext,
         newGold: result.gold,
+        bossRewardMessage,
         npcVoice: getNPCVoice({ mode: "habit", difficulty: task.difficulty, title: task.title, streak: newStreak, hour: new Date().getHours() }),
       });
     }
@@ -221,7 +223,8 @@ export async function PATCH(
         .set({ completed: true, completedAt: nowISO, status: "completed" })
         .where(and(eq(schema.task.id, taskId), eq(schema.task.userId, userId)))
         .run();
-      recordBossDamage(userId, task.difficulty, taskId);
+      await recordBossDamage(userId, task.difficulty, taskId);
+      const bossRewardMessage = await checkBossDefeatedReward();
 
       const completedTask = {
         ...task,
@@ -258,6 +261,7 @@ export async function PATCH(
         newXp: result.xp,
         newXpToNext: result.xpToNext,
         newGold: result.gold,
+        bossRewardMessage,
         npcVoice: getNPCVoice({ mode: "plan", difficulty: task.difficulty, title: task.title, streak: 0, hour: new Date().getHours() }),
       });
     }

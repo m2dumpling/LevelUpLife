@@ -285,4 +285,5 @@ export const giftLog = sqliteTable("gift_log", {
   giftType: text("gift_type").notNull(),
   giftValue: text("gift_value").notNull(),
   date: text("date").notNull(),
+  seenAt: text("seen_at"),
 });

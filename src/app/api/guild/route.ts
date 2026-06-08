@@ -5,8 +5,9 @@
 
 import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
-import { eq, asc, desc, sql, and } from "drizzle-orm";
+import { eq, asc, sql, and } from "drizzle-orm";
 import { getUserId } from "@/lib/auth";
+import { totalXpFromLevelState } from "@/lib/xp-calculator";
 
 /** 生成 6 位大写字母+数字的邀请码（保证唯一） */
 function generateInviteCode(): string {
@@ -28,16 +29,25 @@ function generateInviteCode(): string {
 
 /** 计算 guild 的排行榜排名（按成员总 XP） */
 function getGuildRank(guildId: number): number | null {
-  const all = db
+  const rows = db
     .select({
       guildId: schema.guildMember.guildId,
-      totalXp: sql<number>`COALESCE(SUM(${schema.user.xp}), 0)`,
+      level: schema.user.level,
+      xp: schema.user.xp,
     })
     .from(schema.guildMember)
     .innerJoin(schema.user, eq(schema.guildMember.userId, schema.user.id))
-    .groupBy(schema.guildMember.guildId)
-    .orderBy(desc(sql`COALESCE(SUM(${schema.user.xp}), 0)`))
     .all();
+  const totals = new Map<number, number>();
+  for (const row of rows) {
+    totals.set(
+      row.guildId,
+      (totals.get(row.guildId) || 0) + totalXpFromLevelState(row.level, row.xp)
+    );
+  }
+  const all = [...totals.entries()]
+    .map(([guildId, totalXp]) => ({ guildId, totalXp }))
+    .sort((a, b) => b.totalXp - a.totalXp || a.guildId - b.guildId);
 
   const idx = all.findIndex((g) => g.guildId === guildId);
   return idx >= 0 ? idx + 1 : null;
