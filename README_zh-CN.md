@@ -1,146 +1,74 @@
-# LevelUp Life — 将日常任务变成 RPG 冒险
+# LevelUp Life
 
-完成任务赚 XP/金币，升级变强。
+[English](./README.md) | 中文
 
-> [English](./README.md) | [Android App 📱](https://github.com/m2dumpling/LevelUpLife-App) | 部署在 Cloudflare Tunnel
+LevelUp Life 把日常习惯和计划任务做成 RPG 循环：完成任务获得 XP 和金币、升级、买材料、合成奖牌、加入公会、打世界 Boss，并长期追踪执行力。
 
----
+这个仓库是标准 Web 版，不包含 Web Push 推送通知。需要可安装 PWA 和服务端推送提醒时，使用 [LevelUpLife-PWA](https://github.com/m2dumpling/LevelUpLife-PWA)。
 
-## 🎮 玩法指南
+## 当前状态
 
-你是勇者。每养成一个习惯、完成一个目标，就是 XP。升级。买装备。打败拖延大魔王。
+- 支持多用户注册/登录和管理员后台。
+- 生产环境使用 SQLite + Drizzle。
+- 支持 PM2 standalone 部署，配置文件是 `ecosystem.config.cjs`。
+- 最近的业务回归修复由 `npm run test:bugs` 覆盖，包括金币礼物只提示一次、任务奖励按任务拥有者计算、Boss 奖励只发一次、公会按终身 XP 排名、每日结算日期边界等。
 
-### 📋 两种任务类型
+## 功能
 
-| | Habit 🔥 | Plan 📋 |
-|------|---------|------|
-| **干什么** | 每日修行：运动、阅读、冥想、喝水... | 一次性任务："周五前提交报告" |
-| **何时** | 每天/每周/每月，可选指定星期几 | 你选的执行日期 |
-| **奖励** | 每次打卡 ✅ 赚 XP + 金币 | 到期日完成 → 大额奖励 |
+- Habit 和 Plan 两类任务，按难度发放 XP 和金币。
+- HP、连续打卡、等级、成就、剧情、热力图、月视图。
+- 商店、合成、背包、奖牌装备、宠物、村庄、天气、职业加成。
+- PvP、每日抽奖、世界 Boss、公会、公会聊天、金币礼物。
+- 金币礼物提示通过 `gift_log.seen_at` 在服务端记录，确保收礼人只弹一次。
+- 管理员后台支持用户统计、内容审计、封禁、导出和数据库备份。
 
-点击 **+ 新建** → 选难度 → 预览 → 确认创建。点圆圈 ○ 打卡，看 XP 数字飘起。
+## 技术栈
 
-### 📈 升级体系
+- Next.js 16、React 19、TypeScript
+- Tailwind CSS v4、shadcn/ui 风格组件、Framer Motion
+- SQLite、Drizzle ORM、better-sqlite3
+- JWT、bcryptjs
+- PM2 standalone 部署，适合配合 Cloudflare Tunnel
 
-> 琐碎 5XP · 简单 10XP · 中等 20XP · 困难 40XP · 史诗 80XP
-
-公式：`xpToNext = 100 × 等级^1.5`。1→2 级只需 100 XP。50→51 级需要 35000+。越来越难，越来越爽。
-
-### 💀 HP 惩罚机制
-
-初始 **100 HP ❤️**。每天漏掉一个 Habit → **扣 5 HP**。HP 归零 → **XP 收益 -10%**，你被削弱了。
-
-每天登录自动恢复 **+20 HP**。游戏惩罚懒惰，奖励坚持。
-
-| HP | 状态 |
-|----|------|
-| > 0 | 正常 — 满额 XP |
-| 0 💀 | 虚弱 — **XP -10%** |
-
-### ⚒️ 商店 → 合成 → 佩戴 → 叠加
-
-金币不是摆设。花掉它：
-
-```
-商店 🏪 → 买矿石 → 合成 ⚒️ → 锻造奖牌 → 佩戴 🎒 → XP 加成层层叠加
-```
-
-| 矿石 | 价格 | 奖牌 | 稀有度 | XP 加成 |
-|------|------|------|--------|---------|
-| 🪨 铜矿石 | 10G | 🥉 铜奖牌 | 普通 | +2% |
-| ⛏️ 铁矿石 | 30G | 🥈 铁奖牌 | 罕见 | +5% |
-| 🥇 金矿石 | 100G | 🥇 金奖牌 | 稀有 | +10% |
-| 💠 秘银矿石 | 300G | 💠 秘银奖牌 | 史诗 | +15% |
-| 💎 金刚石 | 1000G | 💎 金刚石奖牌 | 传说 | +25% |
-
-奖牌**乘算叠加**。五枚铜奖牌 = 1.02⁵ ≈ **+10.4% XP**。精打细算，收益翻倍。
-
-### 🏆 成就 & 剧情
-- **18 个成就** ⚔️ — 从"初出茅庐"到"任务之王"，部分隐藏等你发现
-- **6 章剧情** 📖 带 NPC 对话和奖励，随进度触发
-- **热力图** 🟩 GitHub 风格，一眼看出哪天摸鱼了
-- **月度视图** 🗓️ 未来 30 天任务一览
-
-### ⚔️ PvP 竞技场 — 挑战其他勇者
-实时对战，胜者赢走奖池（扣除 2G 税收）。
-
-| 模式 | 玩法 |
-|------|------|
-| ✊ 石头剪刀布 | 双方各自出拳 → 揭示 → 动画对决判定胜负 |
-| 🎲 骰子对决 | 各掷一个 D20，点数大者获胜。平局重掷（最多 3 次） |
-| ⏱ 速算对决 | 抢答数学题，正确且速度快者获胜 |
-
-- 创建对决，赌注 10–500G
-- 加入其他玩家的等待对决
-- 实时轮询反馈对手操作
-- 每日上限 10 次
-- 入场条件：今天至少完成 1 个任务
-
-### 🎰 每日抽奖
-完成 3 个以上 Habit → 免费抽一次！赢奖牌、金币、稀有道具。
-
-### 🐲 世界 Boss
-每次完成任务对共享 Boss 造成伤害。全服合力击杀，全员获得奖励。
-
-### 🏰 公会大厅 — 并肩作战
-- 创建或加入公会（6 位邀请码）
-- **全屏 Discord 风聊天室** `/chat`，彩色头像、消息分组、北京时间显示
-- 公会 HP 条 — 成员漏任务会扣血
-- **公会排行榜** 按总 XP 排名
-- 会长可踢人，成员可退出
-
-### 🐾 宠物系统
-任务奖励孵出宠物蛋。每只宠物提供被动加成（XP 加成、HP 恢复、额外金币）。
-
-### 🏡 村庄建设
-打造你的村庄！每次完成任务贡献资源，解锁建筑获得永久加成。
-
-### 🌦 天气系统
-动态天气影响任务奖励 — 晴天 XP 加成，暴风雨挑战升级。面板上查看天气徽章。
-
-### 🎭 职业系统
-任务历史决定你的职业（战士、法师、盗贼等），各有独特加成。
-
-### 🔒 多用户 + 管理员面板
-- **注册/登录** — 任何人可创建账号（用户名 + 密码）
-- **管理后台** `/admin` — 用户统计、注册趋势、国家分布
-- 内容审计标记可疑任务标题
-- 封禁/解封用户、导出数据、下载数据库备份
-- 仅 seed 创建的 `admin` 账号可访问，无法提权
-
----
-
-## 📱 还有 Android 版
-
-想要真正的到点提醒？下载 **[LevelUp Life Android App →](https://github.com/m2dumpling/LevelUpLife-App)** — 同样的游戏体验，原生闹钟通知，完全离线可用。
-
----
-
-## 🛠 技术栈
-
-Next.js 16 · TypeScript · Tailwind CSS v4 · shadcn/ui · SQLite · Drizzle ORM · JWT + bcrypt · Framer Motion · pm2 · Cloudflare Tunnel
-
----
-
-## 🖥 本地开发
+## 本地开发
 
 ```bash
 npm install
-cp .env.example .env          # 设置 AUTH_PASSWORD 和 JWT_SECRET
-npx drizzle-kit push --force  # 同步 SQLite schema
+cp .env.example .env
+npm run db:push
+npx tsx drizzle/seed.ts
 npm run dev
-npx tsx drizzle/seed.ts       # 首次运行播种
 ```
 
-打开 `http://localhost:3000`，用 `.env` 中的密码登录。
+打开 `http://localhost:3000`。
 
----
+必须配置的 `.env`：
 
-## ☁️ VPS 部署
+```bash
+AUTH_PASSWORD=your-secret-password
+JWT_SECRET=change-me-to-a-random-string-at-least-32-chars
+DATABASE_PATH=./data/levelup.db
+```
 
-Ubuntu 24.04，1 CPU / 1 GB RAM 实测通过。月费约 $4。
+## 验证
 
-### 0. 安装依赖
+```bash
+npm run test:bugs
+npm run build
+```
+
+`npm run test:bugs` 是重点业务回归测试。`npm run build` 验证生产构建。
+
+## 生产安装
+
+非 PWA 线上部署应保持：
+
+- 路径：`/opt/levelup-life`
+- PM2 应用名：`levelup-life`
+- 端口：`3000`
+- 数据库：`/opt/levelup-life/data/levelup.db`
+
+先安装 Node.js 22 和 PM2：
 
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
@@ -148,140 +76,110 @@ apt install -y nodejs git
 npm install -g pm2
 ```
 
-### 1. 克隆仓库
+如果 VPS 已配置 GitHub SSH key，建议用 SSH 克隆：
 
 ```bash
 cd /opt
-git clone https://github.com/m2dumpling/LevelUpLife.git levelup-life
-cd levelup-life
+git clone git@github.com:m2dumpling/LevelUpLife.git levelup-life
+cd /opt/levelup-life
 ```
 
-### 2. 创建密钥
+创建 `.env`，生产环境务必使用绝对数据库路径：
 
 ```bash
-cat > .env << EOF
-AUTH_PASSWORD=$(openssl rand -base64 16)
-JWT_SECRET=$(openssl rand -base64 32)
+cat > .env <<'EOF'
+AUTH_PASSWORD=替换成登录密码
+JWT_SECRET=替换成足够长的随机密钥
+DATABASE_PATH=/opt/levelup-life/data/levelup.db
 EOF
 chmod 600 .env
-cat .env | grep AUTH_PASSWORD    # ← 记下密码！
 ```
 
-### 3. 构建
+构建并初始化：
 
 ```bash
-npm ci                          # ⚠️ 不要加 --omit=dev，Tailwind 构建需要
-npx drizzle-kit push --force
+npm ci
+npm run db:push
 npm run build
-npx tsx drizzle/seed.ts         # 看到 🎉 种子数据播种完成！即可
-```
-
-### 4. 启动
-
-```bash
+npx tsx drizzle/seed.ts
 pm2 start ecosystem.config.cjs
-pm2 save && pm2 startup         # 开机自启
-curl -I http://127.0.0.1:3000   # → 307 就是对的
+pm2 save
 ```
 
-### 5. Cloudflare Tunnel
+健康检查：
 
 ```bash
-curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
-  -o /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared
-
-cloudflared tunnel login         # 打印的 URL 在你自己浏览器打开
-cloudflared tunnel create levelup-life
+curl -I http://127.0.0.1:3000
 ```
 
-Cloudflare 控制台 → **Zero Trust** → **Networks** → **Tunnels** → 配置 → **Public Hostname**:
-- Domain: 你的域名 → Type: HTTP → URL: `localhost:3000`
+未登录请求返回 `307` 并跳转到 `/login` 是正常的。
 
-```bash
-cat > /etc/systemd/system/cloudflared.service << 'EOF'
-[Unit]
-Description=Cloudflare Tunnel
-After=network.target
-[Service]
-ExecStart=/usr/local/bin/cloudflared tunnel run --url http://localhost:3000 levelup-life
-Restart=always
-RestartSec=5
-[Install]
-WantedBy=multi-user.target
-EOF
+## 已安装 VPS 如何更新
 
-systemctl daemon-reload && systemctl enable --now cloudflared
-```
-
-### 6. 防火墙
-
-```bash
-apt install -y ufw
-ufw default deny incoming && ufw default allow outgoing
-ufw allow 22/tcp && ufw --force enable
-```
-
-Tunnel 走出站连接，无需开放 80/443。
-
-### 7. 完成
-
-访问 `https://你的域名`，用 `AUTH_PASSWORD` 登录。
-
----
-
-## 🔄 更新
+已有 `/opt/levelup-life` 部署时：
 
 ```bash
 cd /opt/levelup-life
-./update.sh                     # 一键：pull → build → restart
+git fetch origin
+git status
+cp data/levelup.db data/levelup.db.bak-$(date +%Y%m%d%H%M%S)
+git pull --ff-only origin main
+npm ci --no-audit --no-fund
+npm run build
+pm2 restart levelup-life --update-env
+curl -I http://127.0.0.1:3000
 ```
 
-手动更新：
+如果本次更新改了 `drizzle/schema.ts`，在备份数据库后、重启前执行：
 
 ```bash
-git pull origin main
-npm ci                            # package-lock 有变化时执行
-npm run build                     # ~20s
-npx drizzle-kit push --force      # 本次新增/更新 reward_ledger 等 schema 时必须执行
-pm2 reload ecosystem.config.cjs
+npm run db:push
 ```
 
----
+仓库里的 `update.sh` 会自动执行拉代码、按需安装依赖、构建、同步 standalone 静态资源和 PM2 reload：
 
-## 🩹 常见问题
-
-| 现象 | 解决 |
-|------|------|
-| 构建报错 `Cannot find module @tailwindcss/postcss` | `npm ci --omit=dev` 把 dev 依赖删了。重跑 `npm ci && npm run build` |
-| seed 报 `AUTH_PASSWORD 未设置` | 拉最新代码，seed 脚本已支持自动加载 `.env` |
-| 浏览器 404 但 curl 正常 | Cloudflare Tunnel 的 Public Hostname 没指向 `localhost:3000` |
-| pm2 日志有 `next start` 警告 | 拉最新 `ecosystem.config.cjs`，已改用 `server.js` |
-| 页面能打开但没数据 | 没播种：`npx tsx drizzle/seed.ts` |
-| `drizzle-kit push --forc` 报错 | 拼写错误，是 `--force` 不是 `--forc` |
-
----
-
-## 📁 项目结构
-
+```bash
+cd /opt/levelup-life
+./update.sh
 ```
-├── drizzle/                    # DB schema + 种子
-├── src/
-│   ├── app/
-│   │   ├── api/                # REST: tasks, auth, shop, craft, inventory, logs
-│   │   └── login/              # 登录页
-│   ├── components/
-│   │   ├── TaskList.tsx        # 任务列表 + 创建/编辑/搜索/筛选
-│   │   ├── TaskCard.tsx        # 任务卡片（打卡/编辑/撤销/删除）
-│   │   ├── StatDashboard.tsx   # 状态面板（等级/金币/HP/连击）
-│   │   ├── Heatmap.tsx         # 热力图（周/月/年）
-│   │   ├── MonthlyView.tsx     # 30 天任务预览
-│   │   ├── Timeline.tsx        # 今日日志
-│   │   ├── ShopDialog.tsx      # 矿石商店
-│   │   ├── BackpackDialog.tsx  # 背包 + 奖牌佩戴
-│   │   └── LevelUpModal.tsx    # 升级弹窗
-│   ├── hooks/                  # useTasks, useStats
-│   └── lib/                    # auth, db, xp-calc, shop-data, date-utils
-├── ecosystem.config.cjs        # pm2 配置
-├── update.sh                   # 一键更新脚本
-└── .env.example
+
+## PM2 说明
+
+`ecosystem.config.cjs` 会从 `/opt/levelup-life` 启动 `.next/standalone/server.js`，环境变量为：
+
+```text
+NODE_ENV=production
+PORT=3000
+HOSTNAME=0.0.0.0
+DATABASE_PATH=/opt/levelup-life/data/levelup.db
+```
+
+检查当前 PM2 环境：
+
+```bash
+pm2 describe levelup-life
+pm2 env 0 | grep -E "PORT|DATABASE_PATH|NODE_ENV|PWD"
+```
+
+## 常见问题
+
+| 现象 | 原因 / 处理 |
+| --- | --- |
+| `curl -I` 返回 `307 location: /login` | 正常，未登录用户会跳转登录页。 |
+| `SQLITE_ERROR: no such table: user` | PM2 指到了新的空数据库。改成绝对 `DATABASE_PATH`，再 `pm2 restart --update-env`。 |
+| 部署后出现 `Failed to find Server Action "x"` | 多数是浏览器或 PWA 还拿着旧构建资源。刷新页面、关闭旧标签页或清站点缓存。 |
+| `pm2 logs` 一直不退出 | 这是 tail 日志的正常行为。按 `Ctrl+C`，或用 `pm2 logs levelup-life --lines 80 --nostream`。 |
+| 构建找不到 Tailwind 包 | 不要用 `npm ci --omit=dev`，生产构建需要 devDependencies。执行 `npm ci` 后再 `npm run build`。 |
+
+## 项目结构
+
+```text
+drizzle/                  数据库 schema、迁移、种子脚本
+src/app/                  Next.js App Router 页面和 API
+src/components/           主要 UI 组件
+src/hooks/                客户端 hooks
+src/lib/                  登录、数据库、奖励、日期、结算、游戏逻辑
+tests/                    业务回归测试
+ecosystem.config.cjs      PM2 生产配置
+update.sh                 VPS 更新脚本
 ```
